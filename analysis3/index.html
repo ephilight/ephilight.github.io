@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         :root { --map-gap: 2px; }
-        body { background-color: #ffffff; scroll-behavior: smooth; overflow-x: hidden; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: #ffffff; scroll-behavior: smooth; overflow-x: hidden; font-family: 'Inter', system-ui, -apple-system, sans-serif; color: #1e293b; }
 
         #scrolly {
             position: relative;
@@ -24,10 +24,12 @@
             width: 100%;
             flex: 1;
             padding: 0 8%;
-            z-index: 10;
+            z-index: 20;
             transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
-            opacity: 1;
+            pointer-events: none;
         }
+        
+        .scroll-text .step-content { pointer-events: auto; }
 
         /* Sticky Map Container */
         .sticky-graphic {
@@ -42,30 +44,26 @@
             justify-content: center;
             overflow: hidden;
             flex: 1.4;
-            border-left: 1px solid #f1f5f9;
             transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* EXPLORATION MODE CLASSES */
+        /* EXPLORATION MODE - FULLSCREEN */
         #scrolly.is-exploring .scroll-text {
             flex: 0;
             width: 0;
             padding: 0;
             opacity: 0;
-            pointer-events: none;
         }
 
         #scrolly.is-exploring .sticky-graphic {
             flex: 1;
-            border-left: none;
             background-color: #ffffff;
         }
 
-        /* Tool Header and Legend (Hidden during intro) */
         #tool-header, #legend-footer {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 1s ease;
+            transition: opacity 0.8s ease;
         }
 
         #scrolly.is-exploring #tool-header, 
@@ -83,32 +81,33 @@
         }
 
         .step-content {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
             transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             opacity: 0.1;
             transform: translateX(-20px);
+            max-width: 32rem;
         }
 
         .step.is-active .step-content { opacity: 1; transform: translateX(0); }
 
-        /* Map Styling Integration */
+        /* Map Segment Styling - Designed to look like text lines */
         .document-map {
             display: flex;
             flex-wrap: wrap;
             gap: var(--map-gap);
-            padding: 40px;
+            padding: 60px;
             background: #ffffff;
-            border-radius: 4px;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px -10px rgba(0,0,0,0.03);
             align-content: flex-start;
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, max-width 1s ease;
-            max-width: 600px;
+            max-width: 800px;
             transform-origin: center center;
             border: 1px solid #f1f5f9;
-        }
-
-        #scrolly.is-exploring .document-map {
-            max-width: 800px;
-            box-shadow: 0 20px 60px -15px rgba(0,0,0,0.07);
         }
 
         .map-segment {
@@ -116,16 +115,17 @@
             border-radius: 1px;
             mix-blend-mode: multiply;
             transition: background-color 0.8s ease, transform 0.2s ease, opacity 0.4s ease;
+            cursor: default;
         }
 
         .map-segment.interactive { cursor: pointer; }
         .map-segment.interactive:hover { transform: scale(1.1); z-index: 50; filter: contrast(1.1); }
 
         .Nazi-highlight { outline: 2px solid #ef4444 !important; outline-offset: 1px; z-index: 40; }
-        .highlight-search { outline: 2px solid #334155; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); z-index: 100; opacity: 1 !important; }
+        .highlight-search { outline: 2px solid #334155; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); z-index: 100; opacity: 1 !important; filter: contrast(1.2) brightness(0.9) !important; }
         .dimmed { opacity: 0.05 !important; filter: grayscale(100%); pointer-events: none; }
 
-        /* Reader View Styling */
+        /* Reader View Styling - Pure Copy from original */
         #reader-view {
             position: fixed;
             top: 0;
@@ -160,7 +160,7 @@
             box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
         }
 
-        .legend-item.active { border-color: #334155 !important; background-color: #f8fafc !important; }
+        #scrolly.is-exploring #main-content { margin-top: 0; }
 
         @media (max-width: 768px) {
             #scrolly { flex-direction: column-reverse; }
@@ -171,7 +171,7 @@
 </head>
 <body class="antialiased">
 
-    <!-- TOOL HEADER (Persistent in Tool Mode) -->
+    <!-- TOOL HEADER (Visible only in explore mode) -->
     <div id="tool-header" class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center pointer-events-none">
         <div class="pointer-events-auto flex items-center gap-4">
             <button id="btn-back" class="hidden bg-slate-900 text-white px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-[0.15em] flex items-center gap-2 shadow-xl hover:bg-black transition-all">
@@ -204,7 +204,7 @@
     </div>
 
     <header id="main-title" class="h-[60vh] flex flex-col items-start justify-end px-[10%] pb-20">
-        <span class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">Linguistic Patterns</span>
+        <span class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">Linguistic Study</span>
         <h1 class="text-6xl md:text-8xl font-light text-black tracking-tighter leading-none">
             Structural <span class="font-serif italic text-slate-700">Analysis</span>
         </h1>
@@ -215,10 +215,10 @@
         <article class="scroll-text">
             <section class="step" data-step="grey-all">
                 <div class="step-content">
-                    <h3 class="text-3xl font-light mb-6 text-slate-400">Analysis</h3>
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Perspective</h3>
                     <h2 class="text-3xl font-bold mb-6">We can try to look at all the words, all at once</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        When we represent the entire diary as a series of data points, we get a bird's-eye view of the volume and cadence of the text.
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        By representing sentences as small segments, we can visualize the entire diary corpus as a single document landscape.
                     </p>
                 </div>
             </section>
@@ -226,17 +226,18 @@
             <section class="step" data-step="meaningless">
                 <div class="step-content">
                     <h2 class="text-3xl font-bold mb-6">But this isn’t very meaningful for us</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        Without context, the visualization is just a collection of bars. It tells us how much was written, but not the <i>nature</i> of what was written.
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        In this zoomed-out state, the text is anonymous. We see the length and volume, but the internal "mode" of the writing is hidden.
                     </p>
                 </div>
             </section>
 
             <section class="step" data-step="zoom-label">
                 <div class="step-content">
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">The Model</h3>
                     <h2 class="text-3xl font-bold mb-6">Now, what if we assign each sentence a label?</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        By categorizing sentences based on the author's mode—<span class="text-yellow-600 font-bold">Social</span>, <span class="text-green-600 font-bold">Event</span>, or <span class="text-purple-600 font-bold">Reflection</span>—we begin to see the architecture of the memory.
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        By categorizing sentences based on writing mode—<span class="font-bold text-yellow-500">Social</span>, <span class="font-bold text-blue-500">Event</span>, or <span class="font-bold text-purple-500">Reflection</span>—the text transforms from a grey mass into a structured dataset.
                     </p>
                 </div>
             </section>
@@ -244,17 +245,17 @@
             <section class="step" data-step="valuable-patterns">
                 <div class="step-content">
                     <h2 class="text-3xl font-bold mb-6">Then, our zoomed out view becomes quite valuable</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        The colors reveal a hidden rhythm. We can see seasons of deep introspection followed by bursts of social activity or political reporting.
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        Visual patterns emerge. We can identify dense clusters of political anxiety or seasons of social reprieve at a single glance.
                     </p>
                 </div>
             </section>
 
             <section class="step" data-step="return-to-text">
                 <div class="step-content">
-                    <h2 class="text-3xl font-bold mb-6">We can notice patterns and click on sentences to return to the text</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        The data doesn't replace the diary; it acts as a map. Clicking any segment brings us back to the original intimate prose.
+                    <h2 class="text-3xl font-bold mb-6">Notice patterns and click on sentences to return to text</h2>
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        The visual acts as a portal. By clicking a segment, we zoom directly into the archival entry to read the author's original words.
                     </p>
                 </div>
             </section>
@@ -262,8 +263,8 @@
             <section class="step" data-step="explore">
                 <div class="step-content">
                     <h2 class="text-3xl font-bold mb-6">Now, take a moment to explore the tool</h2>
-                    <p class="text-xl font-light text-slate-500 leading-relaxed">
-                        Interact with the map. Search for specific terms, toggle Nazi references, and filter by mode to discover the underlying structure of the archive.
+                    <p class="text-lg font-light text-slate-500 leading-relaxed">
+                        Use the search and filter tools above to manipulate the entire corpus. Discover the underlying rhythms of the diary yourself.
                     </p>
                 </div>
             </section>
@@ -272,7 +273,7 @@
 
         <div class="sticky-graphic">
             <div id="document-map" class="document-map">
-                <div class="text-slate-300 animate-pulse">Initializing Data...</div>
+                <div class="text-slate-300 animate-pulse">Initializing Corpus Map...</div>
             </div>
         </div>
     </main>
@@ -284,7 +285,7 @@
         </div>
     </footer>
 
-    <!-- Full Reader View -->
+    <!-- Zoomed Reader View -->
     <div id="reader-view">
         <div class="max-w-4xl mx-auto pt-40 pb-96 px-16" id="reader-content"></div>
     </div>
@@ -310,8 +311,13 @@
         let isInteractive = false;
         
         const highlighterPalette = [
-            '#FFD93D', '#FF8AAE', '#C8B6E2', '#A0C4FF', '#FCA5A5', 
-            '#A5D6A7', '#95D1CC', '#FFACAC', '#B4E197', '#D3D3D3'
+            '#FFD93D', // 0: Social
+            '#FF8AAE', // 1: Reflection
+            '#C8B6E2', // 2: Temp/Spat
+            '#A0C4FF', // 3: Blue
+            '#FCA5A5', // 4: Romantic
+            '#A5D6A7', // 5: Event/Political
+            '#95D1CC', '#FFACAC', '#B4E197', '#D3D3D3'
         ];
         const colorMaps = { Category: {}, Subcategory: {} };
 
@@ -333,12 +339,24 @@
             ['Category', 'Subcategory'].forEach(field => {
                 const vals = [...new Set(diaryData.map(r => r[field]).filter(Boolean))].sort();
                 const map = colorMaps[field];
-                if (vals.includes('Social')) map['Social'] = highlighterPalette[0];
-                if (vals.includes('Reflection')) map['Reflection'] = highlighterPalette[1];
-                if (vals.includes('Temp/Spat')) map['Temp/Spat'] = field === 'Subcategory' ? 'transparent' : highlighterPalette[2];
-                if (vals.includes('Romantic')) map['Romantic'] = highlighterPalette[4];
-                if (vals.includes('Event')) map['Event'] = highlighterPalette[5];
-                if (vals.includes('Political')) map['Political'] = highlighterPalette[5];
+                const coreMapping = {
+                    'Social': highlighterPalette[0],
+                    'Reflection': highlighterPalette[1],
+                    'Temp/Spat': highlighterPalette[2],
+                    'Romantic': highlighterPalette[4],
+                    'Event': highlighterPalette[5],
+                    'Political': highlighterPalette[5]
+                };
+
+                vals.forEach(v => {
+                    if (coreMapping[v]) {
+                        map[v] = coreMapping[v];
+                    }
+                });
+
+                if (field === 'Subcategory' && map['Temp/Spat']) {
+                    map['Temp/Spat'] = 'transparent';
+                }
                 
                 let idx = 6;
                 vals.forEach(v => {
@@ -358,8 +376,11 @@
                 segment.dataset.category = row.Category || '';
                 segment.dataset.subcategory = row.Subcategory || '';
                 segment.dataset.nazi = row.Nazi || '';
+                segment.dataset.text = (row.Cleaned_Text || "").toLowerCase();
+                
                 const width = Math.min(Math.max((row.Cleaned_Text || "").length / 3.5, 10), 80);
                 segment.style.width = `${width}px`;
+                
                 segment.onmouseenter = (e) => {
                     if (!isInteractive) return;
                     tooltip.style.display = 'block';
@@ -403,13 +424,18 @@
 
             switch(stepId) {
                 case 'grey-all':
-                case 'meaningless':
                     isInteractive = false;
                     applyVisualState(segments, { color: false, zoom: 1, interactive: false });
                     break;
+                case 'meaningless':
+                    isInteractive = false;
+                    applyVisualState(segments, { color: false, zoom: 1.2, interactive: false });
+                    break;
                 case 'zoom-label':
                     isInteractive = false;
-                    applyVisualState(segments, { color: true, zoom: 3.5, centerIndex: 5, interactive: false });
+                    // Find a row that has a label to show close up
+                    const exampleIdx = diaryData.findIndex(d => d.Category === 'Reflection' || d.Category === 'Event');
+                    applyVisualState(segments, { color: true, zoom: 4.5, centerIndex: exampleIdx !== -1 ? exampleIdx : 10, interactive: false });
                     break;
                 case 'valuable-patterns':
                     isInteractive = false;
@@ -444,18 +470,22 @@
                 const oy = ((tRect.top + tRect.height/2 - rect.top) / rect.height) * 100;
                 docMap.style.transformOrigin = `${ox}% ${oy}%`;
                 docMap.style.transform = `scale(${options.zoom})`;
+            } else {
+                docMap.style.transform = `scale(${options.zoom})`;
             }
         }
 
-        // 3. ORIGINAL TOOL FUNCTIONS
+        // 3. CORE TOOL FUNCTIONS
         function updateColors() {
             const field = colorMode.value;
             const segments = document.querySelectorAll('.map-segment');
             segments.forEach((s, i) => {
-                s.style.backgroundColor = colorMaps[field][diaryData[i][field]] || '#f1f5f9';
+                const val = diaryData[i][field];
+                s.style.backgroundColor = colorMaps[field][val] || '#f1f5f9';
             });
             diaryData.forEach((row, i) => {
-                const color = colorMaps[field][row[field]];
+                const val = row[field];
+                const color = colorMaps[field][val];
                 const hSpan = document.getElementById(`highlight-span-${i}`);
                 if (hSpan) hSpan.style.backgroundColor = color || 'transparent';
             });
@@ -481,7 +511,7 @@
             const allElements = document.querySelectorAll('.map-segment, .reader-sentence');
             allElements.forEach(el => {
                 const matchesFilter = !activeFilter || el.dataset[field] === activeFilter;
-                const matchesSearch = !term || el.dataset.text?.toLowerCase().includes(term) || el.innerText.toLowerCase().includes(term);
+                const matchesSearch = !term || el.dataset.text?.includes(term);
                 if (matchesFilter) {
                     el.classList.remove('dimmed');
                     if (term && matchesSearch) el.classList.add('highlight-search'); else el.classList.remove('highlight-search');
