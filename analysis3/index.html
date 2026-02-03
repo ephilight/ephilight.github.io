@@ -89,40 +89,42 @@
 
         /* --- SEGMENT STYLING (The Morphing Elements) --- */
         .map-segment {
-            display: inline-block;
-            vertical-align: baseline;
-            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: color 0.5s ease, background-color 0.5s ease, transform 0.4s ease;
             border-radius: 2px;
-            white-space: nowrap;
-            overflow: hidden;
             cursor: default;
         }
 
         /* Mode 1: Text Mode (Overview/Close Read) */
+        /* Changed to display: inline to flow like a real text file */
         .map-segment.mode-text {
+            display: inline;
             font-size: 3.5px; /* Micro-text */
             line-height: 1.6;
             color: #334155;
             background-color: transparent !important;
             width: auto !important;
             height: auto !important;
-            margin: 0 2px 0 0;
+            margin: 0;
             padding: 0;
+            white-space: normal; /* Allow wrapping */
         }
 
         /* Mode 2: Bar Mode (Abstract Pattern) */
         .map-segment.mode-bar {
+            display: inline-block; /* Blocks for bars */
+            vertical-align: middle;
             font-size: 0px; /* Hide text */
             color: transparent;
             height: 10px;
             margin: 1px;
             border-radius: 2px;
             mix-blend-mode: multiply;
+            white-space: nowrap;
         }
 
         /* Interactive State */
         .map-segment.interactive { cursor: pointer; }
-        .map-segment.interactive:hover { transform: scale(1.2); z-index: 50; filter: contrast(1.1); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .map-segment.interactive:hover { transform: scale(1.2); z-index: 50; filter: contrast(1.1); position: relative; }
 
         /* --- EXPLORE UI (Header/Footer) --- */
         #tool-header, #legend-footer {
@@ -240,7 +242,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 2: Modeling</h3>
                     <h2 class="text-3xl font-bold mb-4">Categorizing the Experience</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Let's zoom in. By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-purple-500 font-bold">Reflection</span>—we transform text into data. The "close reading" is now color-coded.
+                        Let's zoom in. By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The "close reading" is now color-coded.
                     </p>
                 </div>
             </section>
