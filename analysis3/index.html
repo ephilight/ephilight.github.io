@@ -76,15 +76,17 @@
         /* --- MAP CONTAINER --- */
         .document-map {
             position: relative;
-            display: block; /* Normal flow for text */
-            padding: 60px;
+            display: block; 
+            padding: 40px 60px;
             background: #ffffff;
-            width: 90vw;
-            max-width: 900px; 
+            width: 95vw;
+            max-width: 1000px; 
             height: auto;
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
-            transform-origin: center 20%; /* Zoom towards top-center */
+            transform-origin: center 20%; 
             box-shadow: 0 20px 60px -20px rgba(0,0,0,0.1);
+            text-align: justify; /* Novel-style justification */
+            line-height: 1; /* Tightest line height */
         }
 
         /* --- SEGMENT STYLING (The Morphing Elements) --- */
@@ -95,23 +97,22 @@
         }
 
         /* Mode 1: Text Mode (Overview/Close Read) */
-        /* Changed to display: inline to flow like a real text file */
         .map-segment.mode-text {
             display: inline;
             font-size: 3.5px; /* Micro-text */
-            line-height: 1.6;
+            letter-spacing: -0.1px;
             color: #334155;
             background-color: transparent !important;
             width: auto !important;
             height: auto !important;
             margin: 0;
             padding: 0;
-            white-space: normal; /* Allow wrapping */
+            white-space: normal;
         }
 
         /* Mode 2: Bar Mode (Abstract Pattern) */
         .map-segment.mode-bar {
-            display: inline-block; /* Blocks for bars */
+            display: inline-block; 
             vertical-align: middle;
             font-size: 0px; /* Hide text */
             color: transparent;
@@ -223,7 +224,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 1: The Raw Text</h3>
                     <h2 class="text-3xl font-bold mb-4">Reading 5,000 sentences at once.</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Behind this card is the entire diary corpus. Rendered in micro-script, we can perceive the sheer volume of the archive, but the meaning remains illegible. It is just a grey wash of data.
+                        Behind this card is the entire diary corpus. Rendered in micro-script, we can perceive the sheer volume of the archive. By ignoring traditional breaks, the text flows as a single, dense narrative block.
                     </p>
                 </div>
             </section>
@@ -232,7 +233,7 @@
                 <div class="step-content">
                     <h2 class="text-3xl font-bold mb-4">Structure without Meaning</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        We can see the paragraphs and the flow, but without a lens to interpret this data, it remains a "grey mass"—opaque and overwhelming.
+                        We can see the flow of words, but without a lens to interpret this data, it remains a "grey mass"—opaque, justified, and overwhelming.
                     </p>
                 </div>
             </section>
@@ -242,7 +243,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 2: Modeling</h3>
                     <h2 class="text-3xl font-bold mb-4">Categorizing the Experience</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Let's zoom in. By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The "close reading" is now color-coded.
+                        Let's zoom in. By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The justified block is now color-coded.
                     </p>
                 </div>
             </section>
@@ -355,15 +356,14 @@
             diaryData.forEach((row, i) => {
                 // VISUAL SEGMENT
                 const segment = document.createElement('span');
-                segment.className = 'map-segment mode-text'; // Default to text mode
+                segment.className = 'map-segment mode-text'; 
                 segment.dataset.index = i;
                 segment.dataset.category = row.Category || '';
                 segment.dataset.subcategory = row.Subcategory || '';
                 segment.dataset.nazi = row.Nazi || '';
                 segment.dataset.text = (row.Cleaned_Text || "").toLowerCase();
-                segment.innerText = row.Cleaned_Text + " "; // Add space for text flow
+                segment.innerText = row.Cleaned_Text + " "; 
                 
-                // Store bar width for later switching
                 const barWidth = Math.min(Math.max((row.Cleaned_Text || "").length / 3.5, 10), 80);
                 segment.dataset.barWidth = barWidth;
 
@@ -378,7 +378,7 @@
                 segment.onclick = (e) => { if (isExploreMode) zoomIn(e, i); };
                 docMap.appendChild(segment);
 
-                // READER ELEMENT (For Overlay)
+                // READER ELEMENT
                 const span = document.createElement('span');
                 span.className = 'reader-sentence';
                 span.id = `reader-s-${i}`;
@@ -420,7 +420,6 @@
             response.element.classList.add('is-active');
             const segments = document.querySelectorAll('.map-segment');
 
-            // Toggle Fullscreen Mode
             if (stepId === 'explore') {
                 document.body.classList.add('is-exploring');
                 isExploreMode = true;
@@ -431,28 +430,19 @@
 
             switch(stepId) {
                 case 'overview': 
-                    // Mode: Text (Micro-script), No Color, No Zoom
                     applyVisualState(segments, { mode: 'text', color: false, zoom: 1 });
                     break;
-
                 case 'meaningless': 
-                    // Mode: Text, No Color, Slight Zoom
                     applyVisualState(segments, { mode: 'text', color: false, zoom: 1.1 });
                     break;
-                
                 case 'zoom-label': 
-                    // Mode: Text, Colored, High Zoom (Close Reading)
                     const targetIdx = diaryData.findIndex(d => d.Category === 'Reflection');
                     applyVisualState(segments, { mode: 'text', color: true, zoom: 3.5, centerIdx: targetIdx });
                     break;
-
                 case 'valuable-patterns': 
-                    // Mode: Bar (Abstract), Colored, Zoom Out
                     applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
                     break;
-
                 case 'explore': 
-                    // Mode: Bar, Colored, Interactive
                     applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
                     break;
             }
@@ -462,21 +452,17 @@
             const field = colorMode.value;
             
             segments.forEach((s, i) => {
-                // 1. Toggle Mode Classes
                 if (mode === 'text') {
                     s.classList.add('mode-text');
                     s.classList.remove('mode-bar');
-                    s.style.width = 'auto'; // Text width
-                    s.innerText = diaryData[i].Cleaned_Text + " "; // Restore text
+                    s.style.width = 'auto'; 
+                    s.innerText = diaryData[i].Cleaned_Text + " "; 
                 } else {
                     s.classList.add('mode-bar');
                     s.classList.remove('mode-text');
-                    s.style.width = s.dataset.barWidth + 'px'; // Bar width
-                    // We don't remove innerText, we hide it via font-size: 0 in CSS
+                    s.style.width = s.dataset.barWidth + 'px'; 
                 }
 
-                // 2. Color Application
-                // If colored, use palette. If not, use dark text (text mode) or grey bar (bar mode)
                 if (color) {
                     const c = colorMaps[field][diaryData[i][field]] || '#cbd5e1';
                     if (mode === 'text') {
@@ -487,13 +473,12 @@
                         s.style.backgroundColor = c;
                     }
                 } else {
-                    // Monochrome state
                     if (mode === 'text') {
-                        s.style.color = '#334155'; // Dark grey text
+                        s.style.color = '#334155'; 
                         s.style.backgroundColor = 'transparent';
                     } else {
                         s.style.color = 'transparent';
-                        s.style.backgroundColor = '#e2e8f0'; // Grey bars
+                        s.style.backgroundColor = '#e2e8f0'; 
                     }
                 }
                 
@@ -501,7 +486,6 @@
                 else s.classList.remove('interactive');
             });
 
-            // 3. Zoom Logic
             if (centerIdx !== undefined) {
                 const target = segments[centerIdx];
                 const mapRect = docMap.getBoundingClientRect();
@@ -512,7 +496,6 @@
                 docMap.style.transform = `scale(${zoom})`;
             } else {
                 docMap.style.transform = `scale(${zoom})`;
-                // Reset origin to center if zooming out
                 if (zoom === 1) docMap.style.transformOrigin = 'center 20%'; 
             }
         }
@@ -520,7 +503,6 @@
         // 3. TOOL INTERACTIVITY
         function updateColors() {
             const field = colorMode.value;
-            // Only update if we are in a colored state (which we are in explore mode)
             if (isExploreMode) {
                 document.querySelectorAll('.map-segment').forEach((s, i) => {
                     s.style.backgroundColor = colorMaps[field][diaryData[i][field]] || '#f1f5f9';
@@ -532,16 +514,12 @@
         function applyFilterAndSearch() {
             const term = searchInput.value.toLowerCase().trim();
             const field = colorMode.value.toLowerCase();
-            
-            // Filter Maps & Reader
             const all = document.querySelectorAll('.map-segment, .reader-sentence');
             all.forEach(el => {
                 const itemVal = el.dataset[field];
                 const textVal = el.dataset.text;
-                
                 const matchesFilter = !activeFilter || itemVal === activeFilter;
                 const matchesSearch = !term || textVal.includes(term);
-
                 if (matchesFilter) {
                     el.classList.remove('dimmed');
                     if (term && matchesSearch) el.classList.add('highlight-search');
@@ -557,15 +535,12 @@
             const rect = docMap.getBoundingClientRect();
             const ox = ((event.clientX - rect.left) / rect.width) * 100;
             const oy = ((event.clientY - rect.top) / rect.height) * 100;
-            
             docMap.style.transformOrigin = `${ox}% ${oy}%`;
             docMap.style.transform = 'scale(4.5)';
-            docMap.style.opacity = '0'; // Hide map
-            
+            docMap.style.opacity = '0';
             setTimeout(() => {
                 readerView.classList.add('active');
                 btnBack.classList.remove('hidden');
-                
                 const target = document.getElementById(`reader-s-${index}`);
                 document.querySelectorAll('.reader-sentence').forEach(el => el.classList.remove('focused'));
                 target.classList.add('focused');
@@ -580,12 +555,7 @@
             docMap.style.opacity = '1';
         };
 
-        // UI Event Listeners
-        colorMode.onchange = () => { 
-            activeFilter = null; 
-            updateColors(); 
-            if(isExploreMode) applyFilterAndSearch(); 
-        };
+        colorMode.onchange = () => { activeFilter = null; updateColors(); if(isExploreMode) applyFilterAndSearch(); };
         searchInput.oninput = applyFilterAndSearch;
         NaziToggle.onchange = () => {
             const isChecked = NaziToggle.checked;
