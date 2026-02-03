@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrollytelling Archive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+        .story-card {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .story-card:hover {
+            padding-left: 2rem;
+            background-color: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .story-number {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="h-[40vh] flex flex-col items-start justify-end px-[10%] pb-12">
+        <span class="text-xs uppercase tracking-[0.4em] text-zinc-500 mb-4">Digital Archive</span>
+        <h1 class="text-6xl md:text-8xl font-light tracking-tighter leading-none">
+            The <span class="italic font-serif">Stories</span>
+        </h1>
+    </header>
+
+    <main class="px-[10%] pb-32">
+        <!-- Story 1 -->
+        <a href="./diary-analysis/index.html" class="story-card group block py-12">
+            <div class="flex items-baseline gap-8">
+                <span class="story-number text-sm text-zinc-600">01</span>
+                <div>
+                    <h2 class="text-3xl md:text-5xl font-light group-hover:italic transition-all">The Intimate Lexicon</h2>
+                    <p class="text-zinc-500 mt-4 max-w-md font-light leading-relaxed">
+                        An archival deconstruction of personal diaries through linguistic patterns and tactile evidence.
+                    </p>
+                </div>
+                <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                    <span class="text-xs uppercase tracking-widest text-zinc-400">Enter Story →</span>
+                </div>
+            </div>
+        </a>
+
+        <!-- Story 2 (Placeholder) -->
+        <a href="#" class="story-card group block py-12 opacity-40 grayscale pointer-events-none">
+            <div class="flex items-baseline gap-8">
+                <span class="story-number text-sm text-zinc-600">02</span>
+                <div>
+                    <h2 class="text-3xl md:text-5xl font-light">Urban Shadows</h2>
+                    <p class="text-zinc-500 mt-4 max-w-md font-light">
+                        Exploring the evolution of city architecture through light and shadow. (Coming Soon)
+                    </p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Story 3 (Placeholder) -->
+        <a href="#" class="story-card group block py-12 opacity-40 grayscale pointer-events-none">
+            <div class="flex items-baseline gap-8">
+                <span class="story-number text-sm text-zinc-600">03</span>
+                <div>
+                    <h2 class="text-3xl md:text-5xl font-light">The Weight of Water</h2>
+                    <p class="text-zinc-500 mt-4 max-w-md font-light">
+                        A data-driven scrollytelling piece on global rising sea levels. (Coming Soon)
+                    </p>
+                </div>
+            </div>
+        </a>
+    </main>
+
+    <footer class="p-[10%] border-t border-zinc-900 text-zinc-600 text-xs uppercase tracking-widest flex justify-between">
+        <span>© 2024 Scrollytelling Archive</span>
+        <a href="https://github.com" class="hover:text-white transition-colors">Source Code</a>
+    </footer>
+
+</body>
+</html>
