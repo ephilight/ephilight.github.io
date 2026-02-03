@@ -15,6 +15,18 @@
             position: relative;
             display: flex;
             flex-direction: row;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Scrolling Analysis Side */
+        .scroll-text {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            padding: 0 8%;
+            z-index: 10;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 1;
         }
 
         /* Sticky Map Container */
@@ -31,15 +43,22 @@
             overflow: hidden;
             flex: 1.4;
             border-left: 1px solid #f1f5f9;
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Scrolling Analysis Side */
-        .scroll-text {
-            position: relative;
-            width: 100%;
+        /* EXPLORATION MODE CLASSES */
+        #scrolly.is-exploring .scroll-text {
+            flex: 0;
+            width: 0;
+            padding: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #scrolly.is-exploring .sticky-graphic {
             flex: 1;
-            padding: 0 8%;
-            z-index: 10;
+            border-left: none;
+            background-color: #ffffff;
         }
 
         .step {
@@ -71,10 +90,15 @@
             border-radius: 4px;
             box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
             align-content: flex-start;
-            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, max-width 1s ease;
             max-width: 600px;
             transform-origin: center center;
             border: 1px solid #f1f5f9;
+        }
+
+        #scrolly.is-exploring .document-map {
+            max-width: 900px; /* Expand map in exploration mode */
+            box-shadow: 0 20px 60px -15px rgba(0,0,0,0.07);
         }
 
         .map-segment {
@@ -122,7 +146,7 @@
             pointer-events: auto;
         }
 
-        /* Explore Interface (Hidden until final step) */
+        /* Explore Interface */
         #explore-ui {
             position: absolute;
             top: 20px;
@@ -130,7 +154,7 @@
             background: white;
             padding: 10px 20px;
             border-radius: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
@@ -140,39 +164,17 @@
             display: flex;
             align-items: center;
             gap: 12px;
-        }
-
-        /* Error/Fallback UI */
-        #fallback-ui {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(255,255,255,0.9);
-            z-index: 500;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            text-align: center;
+            z-index: 200;
         }
 
         @media (max-width: 768px) {
             #scrolly { flex-direction: column-reverse; }
             .sticky-graphic { height: 40vh; }
+            #scrolly.is-exploring .scroll-text { height: 0; flex: 0; }
         }
     </style>
 </head>
 <body class="antialiased">
-
-    <!-- Fallback for local files/CORS issues -->
-    <div id="fallback-ui">
-        <h2 class="text-xl font-bold text-slate-800 mb-2">Could not find data file</h2>
-        <p class="text-slate-500 mb-6 max-w-sm">Please select your diary CSV file manually to start the experience.</p>
-        <input type="file" id="manual-csv" accept=".csv" class="hidden">
-        <button onclick="document.getElementById('manual-csv').click()" class="bg-black text-white px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">
-            Upload CSV
-        </button>
-    </div>
 
     <header class="h-[60vh] flex flex-col items-start justify-end px-[10%] pb-20">
         <span class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">Linguistic Patterns</span>
@@ -274,20 +276,19 @@
     <footer class="h-[60vh] flex items-center justify-center bg-black text-white px-8">
         <div class="max-w-xl text-center">
             <h2 class="text-3xl md:text-5xl font-serif italic mb-8">Data is the ghost of a lived experience.</h2>
-            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-xs uppercase tracking-widest border border-white/20 px-8 py-3 rounded-full hover:bg-white hover:text-black transition-all">Restart Story</button>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-xs uppercase tracking-widest border border-white/20 px-8 py-3 rounded-full hover:bg-white hover:text-black transition-all text-white">Restart Story</button>
         </div>
     </footer>
 
     <script>
         const scroller = scrollama();
+        const scrollyContainer = document.getElementById('scrolly');
         const docMap = document.getElementById('document-map');
         const readerOverlay = document.getElementById('reader-overlay');
         const readerText = document.getElementById('reader-text');
         const readerMeta = document.getElementById('reader-meta');
         const closeReader = document.getElementById('close-reader');
         const exploreUi = document.getElementById('explore-ui');
-        const fallbackUi = document.getElementById('fallback-ui');
-        const manualCsv = document.getElementById('manual-csv');
 
         let diaryData = [];
         let isInteractive = false;
@@ -301,12 +302,11 @@
             'Political': '#A5D6A7'
         };
 
-        // 1. DATA LOADING
-        // We use encodeURI to handle spaces and parentheses in the filename
         const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
 
+        // 1. DATA LOADING
         function loadCSV() {
-            // Using encodeURI ensures the URL is valid even with spaces/parentheses
+            // Safety: use encodeURI for filenames with special characters
             const url = encodeURI(csvFileName);
             
             Papa.parse(url, {
@@ -314,34 +314,14 @@
                 header: true,
                 skipEmptyLines: true,
                 complete: (results) => {
-                    processData(results.data);
+                    diaryData = results.data;
+                    renderMap();
+                    initScroller();
                 },
                 error: (err) => {
-                    console.error("PapaParse failed to fetch directly:", err);
-                    // Show fallback UI if direct fetch fails (common in secure/blob environments)
-                    fallbackUi.style.display = 'flex';
+                    docMap.innerHTML = `<div class="text-red-400 text-sm p-4">Error loading CSV. Verify file path.</div>`;
                 }
             });
-        }
-
-        manualCsv.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                Papa.parse(file, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: (results) => {
-                        processData(results.data);
-                        fallbackUi.style.display = 'none';
-                    }
-                });
-            }
-        });
-
-        function processData(data) {
-            diaryData = data;
-            renderMap();
-            initScroller();
         }
 
         function renderMap() {
@@ -371,6 +351,13 @@
             response.element.classList.add('is-active');
             const segments = document.querySelectorAll('.map-segment');
 
+            // Handle the Exploration Layout Toggle
+            if (stepId === 'explore') {
+                scrollyContainer.classList.add('is-exploring');
+            } else {
+                scrollyContainer.classList.remove('is-exploring');
+            }
+
             switch(stepId) {
                 case 'grey-all':
                     isInteractive = false;
@@ -384,9 +371,7 @@
                 
                 case 'zoom-label':
                     isInteractive = false;
-                    // Find a row with a category to zoom into
-                    const firstCategoryIdx = diaryData.findIndex(d => highlighterPalette[d.Category]);
-                    applyVisualState(segments, { color: true, zoom: 4, centerIndex: firstCategoryIdx !== -1 ? firstCategoryIdx : 20, interactive: false });
+                    applyVisualState(segments, { color: true, zoom: 3, centerIndex: 20, interactive: false });
                     break;
 
                 case 'valuable-patterns':
@@ -397,8 +382,8 @@
                 case 'return-to-text':
                     isInteractive = true;
                     applyVisualState(segments, { color: true, zoom: 1, interactive: true });
-                    // Zoom to a specific starting example
-                    setTimeout(() => zoomTo(Math.min(5, diaryData.length - 1)), 500);
+                    // Visual hint: show a sample zoom
+                    setTimeout(() => zoomTo(2), 500);
                     break;
 
                 case 'explore':
@@ -476,7 +461,6 @@
             window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
         }
 
-        // Initialize loading
         loadCSV();
     </script>
 </body>
