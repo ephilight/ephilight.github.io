@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diary Corpus - Narrative Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/scrollama"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --map-gap: 2px; }
+        body { background-color: #ffffff; scroll-behavior: smooth; overflow-x: hidden; }
+
+        #scrolly {
+            position: relative;
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* Sticky Map Container */
+        .sticky-graphic {
+            position: sticky;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #fafafa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex: 1.4;
+            border-left: 1px solid #f1f5f9;
+        }
+
+        /* Scrolling Analysis Side */
+        .scroll-text {
+            position: relative;
+            width: 100%;
+            flex: 1;
+            padding: 0 8%;
+            z-index: 10;
+        }
+
+        .step {
+            margin: 0 auto;
+            min-height: 110vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .step-content {
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0.1;
+            transform: translateX(-20px);
+        }
+
+        .step.is-active .step-content {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Map Styling Integration */
+        .document-map {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--map-gap);
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+            align-content: flex-start;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
+            max-width: 600px;
+            transform-origin: center center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .map-segment {
+            height: 10px;
+            border-radius: 1px;
+            mix-blend-mode: multiply;
+            transition: background-color 0.8s ease, transform 0.4s ease, opacity 0.4s ease;
+        }
+
+        .map-segment.interactive {
+            cursor: pointer;
+        }
+        
+        .map-segment.interactive:hover {
+            transform: scale(1.3);
+            z-index: 50;
+        }
+
+        .dimmed {
+            opacity: 0.1 !important;
+        }
+
+        /* Reader View - Overlay */
+        #reader-overlay {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 450px;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: all 0.5s ease;
+            pointer-events: none;
+            border: 1px solid #f1f5f9;
+            z-index: 100;
+        }
+
+        #reader-overlay.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-20px);
+            pointer-events: auto;
+        }
+
+        /* Explore Interface (Hidden until final step) */
+        #explore-ui {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0;
+            transition: opacity 1s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Error/Fallback UI */
+        #fallback-ui {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 500;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            #scrolly { flex-direction: column-reverse; }
+            .sticky-graphic { height: 40vh; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Fallback for local files/CORS issues -->
+    <div id="fallback-ui">
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Could not find data file</h2>
+        <p class="text-slate-500 mb-6 max-w-sm">Please select your diary CSV file manually to start the experience.</p>
+        <input type="file" id="manual-csv" accept=".csv" class="hidden">
+        <button onclick="document.getElementById('manual-csv').click()" class="bg-black text-white px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-slate-800 transition-all">
+            Upload CSV
+        </button>
+    </div>
+
+    <header class="h-[60vh] flex flex-col items-start justify-end px-[10%] pb-20">
+        <span class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-4">Linguistic Patterns</span>
+        <h1 class="text-6xl md:text-8xl font-light text-black tracking-tighter leading-none">
+            Structural <span class="font-serif italic text-slate-700">Analysis</span>
+        </h1>
+    </header>
+
+    <main id="scrolly">
+        
+        <!-- LEFT: SCROLLING ANALYSIS -->
+        <article class="scroll-text">
+            
+            <section class="step" data-step="grey-all">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">We can try to look at all the words, all at once</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        When we represent the entire diary as a series of data points, we get a bird's-eye view of the volume and cadence of the text.
+                    </p>
+                </div>
+            </section>
+
+            <section class="step" data-step="meaningless">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">But this isn’t very meaningful for us</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        Without context, the visualization is just a collection of bars. It tells us how much was written, but not the <i>nature</i> of what was written.
+                    </p>
+                </div>
+            </section>
+
+            <section class="step" data-step="zoom-label">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">Now, what if we assign each sentence a label?</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        By categorizing sentences based on the author's mode—<span class="text-yellow-600 font-bold">Social</span>, <span class="text-green-600 font-bold">Event</span>, or <span class="text-purple-600 font-bold">Reflection</span>—we begin to see the architecture of the memory.
+                    </p>
+                </div>
+            </section>
+
+            <section class="step" data-step="valuable-patterns">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">Then, our zoomed out view becomes quite valuable</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        The colors reveal a hidden rhythm. We can see seasons of deep introspection followed by bursts of social activity or political reporting.
+                    </p>
+                </div>
+            </section>
+
+            <section class="step" data-step="return-to-text">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">We can notice patterns and click on sentences to return to the text</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        The data doesn't replace the diary; it acts as a map. Clicking any segment brings us back to the original intimate prose.
+                    </p>
+                </div>
+            </section>
+
+            <section class="step" data-step="explore">
+                <div class="step-content">
+                    <h3 class="text-3xl font-light mb-6">Now, take a moment to explore the tool</h3>
+                    <p class="text-xl font-light text-slate-500 leading-relaxed">
+                        Hover over segments to see the category, and click to read the specific sentence. Use the map to navigate the life of the author.
+                    </p>
+                </div>
+            </section>
+            
+            <div class="h-[40vh]"></div>
+        </article>
+
+        <!-- RIGHT: STICKY MAP -->
+        <div class="sticky-graphic">
+            <!-- Explore Indicator -->
+            <div id="explore-ui">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Interactive Mode Active
+            </div>
+
+            <div id="document-map" class="document-map">
+                <div class="text-slate-300 animate-pulse">Loading Archive...</div>
+            </div>
+
+            <!-- Contextual Reader Overlay -->
+            <div id="reader-overlay">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <p id="reader-meta" class="text-[10px] uppercase tracking-widest text-slate-400 font-bold"></p>
+                    </div>
+                    <button id="close-reader" class="text-slate-300 hover:text-slate-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <p id="reader-text" class="text-lg font-serif leading-relaxed text-slate-800 italic"></p>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="h-[60vh] flex items-center justify-center bg-black text-white px-8">
+        <div class="max-w-xl text-center">
+            <h2 class="text-3xl md:text-5xl font-serif italic mb-8">Data is the ghost of a lived experience.</h2>
+            <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-xs uppercase tracking-widest border border-white/20 px-8 py-3 rounded-full hover:bg-white hover:text-black transition-all">Restart Story</button>
+        </div>
+    </footer>
+
+    <script>
+        const scroller = scrollama();
+        const docMap = document.getElementById('document-map');
+        const readerOverlay = document.getElementById('reader-overlay');
+        const readerText = document.getElementById('reader-text');
+        const readerMeta = document.getElementById('reader-meta');
+        const closeReader = document.getElementById('close-reader');
+        const exploreUi = document.getElementById('explore-ui');
+        const fallbackUi = document.getElementById('fallback-ui');
+        const manualCsv = document.getElementById('manual-csv');
+
+        let diaryData = [];
+        let isInteractive = false;
+
+        const highlighterPalette = {
+            'Social': '#FFD93D',
+            'Reflection': '#FF8AAE',
+            'Temp/Spat': '#C8B6E2',
+            'Event': '#A5D6A7',
+            'Romantic': '#FCA5A5',
+            'Political': '#A5D6A7'
+        };
+
+        // 1. DATA LOADING
+        // We use encodeURI to handle spaces and parentheses in the filename
+        const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
+
+        function loadCSV() {
+            // Using encodeURI ensures the URL is valid even with spaces/parentheses
+            const url = encodeURI(csvFileName);
+            
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    processData(results.data);
+                },
+                error: (err) => {
+                    console.error("PapaParse failed to fetch directly:", err);
+                    // Show fallback UI if direct fetch fails (common in secure/blob environments)
+                    fallbackUi.style.display = 'flex';
+                }
+            });
+        }
+
+        manualCsv.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        processData(results.data);
+                        fallbackUi.style.display = 'none';
+                    }
+                });
+            }
+        });
+
+        function processData(data) {
+            diaryData = data;
+            renderMap();
+            initScroller();
+        }
+
+        function renderMap() {
+            docMap.innerHTML = '';
+            diaryData.forEach((row, i) => {
+                const segment = document.createElement('div');
+                segment.className = 'map-segment';
+                segment.dataset.index = i;
+                segment.dataset.category = row.Category || '';
+                
+                const textLen = (row.Cleaned_Text || "").length;
+                const width = Math.min(Math.max(textLen / 4, 6), 50);
+                segment.style.width = `${width}px`;
+                segment.style.backgroundColor = '#e2e8f0'; // Default grey
+
+                segment.onclick = (e) => {
+                    if (isInteractive) zoomTo(i);
+                };
+
+                docMap.appendChild(segment);
+            });
+        }
+
+        // 2. NARRATIVE STATES
+        function handleStepEnter(response) {
+            const stepId = response.element.getAttribute('data-step');
+            response.element.classList.add('is-active');
+            const segments = document.querySelectorAll('.map-segment');
+
+            switch(stepId) {
+                case 'grey-all':
+                    isInteractive = false;
+                    applyVisualState(segments, { color: false, zoom: 1, interactive: false });
+                    break;
+                
+                case 'meaningless':
+                    isInteractive = false;
+                    applyVisualState(segments, { color: false, zoom: 1, interactive: false });
+                    break;
+                
+                case 'zoom-label':
+                    isInteractive = false;
+                    // Find a row with a category to zoom into
+                    const firstCategoryIdx = diaryData.findIndex(d => highlighterPalette[d.Category]);
+                    applyVisualState(segments, { color: true, zoom: 4, centerIndex: firstCategoryIdx !== -1 ? firstCategoryIdx : 20, interactive: false });
+                    break;
+
+                case 'valuable-patterns':
+                    isInteractive = false;
+                    applyVisualState(segments, { color: true, zoom: 1, interactive: false });
+                    break;
+
+                case 'return-to-text':
+                    isInteractive = true;
+                    applyVisualState(segments, { color: true, zoom: 1, interactive: true });
+                    // Zoom to a specific starting example
+                    setTimeout(() => zoomTo(Math.min(5, diaryData.length - 1)), 500);
+                    break;
+
+                case 'explore':
+                    isInteractive = true;
+                    applyVisualState(segments, { color: true, zoom: 1, interactive: true });
+                    exploreUi.style.opacity = '1';
+                    break;
+            }
+        }
+
+        function applyVisualState(segments, options) {
+            const { color, zoom, centerIndex, interactive } = options;
+
+            // Update Colors
+            segments.forEach((s, i) => {
+                s.style.backgroundColor = color ? (highlighterPalette[s.dataset.category] || '#e2e8f0') : '#e2e8f0';
+                
+                if (interactive) {
+                    s.classList.add('interactive');
+                } else {
+                    s.classList.remove('interactive');
+                }
+            });
+
+            // Update Zoom
+            if (zoom === 1) {
+                docMap.style.transform = 'scale(1)';
+                readerOverlay.classList.remove('active');
+            } else if (centerIndex !== undefined) {
+                const target = segments[centerIndex];
+                if (!target) return;
+                const rect = docMap.getBoundingClientRect();
+                const targetRect = target.getBoundingClientRect();
+                const originX = ((targetRect.left + targetRect.width/2 - rect.left) / rect.width) * 100;
+                const originY = ((targetRect.top + targetRect.height/2 - rect.top) / rect.height) * 100;
+                docMap.style.transformOrigin = `${originX}% ${originY}%`;
+                docMap.style.transform = `scale(${zoom})`;
+            }
+        }
+
+        function zoomTo(index) {
+            const segments = document.querySelectorAll('.map-segment');
+            const segment = segments[index];
+            if (!segment) return;
+
+            const rect = docMap.getBoundingClientRect();
+            const segRect = segment.getBoundingClientRect();
+            const originX = ((segRect.left + segRect.width/2 - rect.left) / rect.width) * 100;
+            const originY = ((segRect.top + segRect.height/2 - rect.top) / rect.height) * 100;
+            
+            docMap.style.transformOrigin = `${originX}% ${originY}%`;
+            docMap.style.transform = 'scale(8)';
+
+            // Reader Update
+            const data = diaryData[index];
+            readerMeta.textContent = `Entry ${data.Entry_Number || 'N/A'} — ${data.Category || 'Uncategorized'}`;
+            readerText.textContent = `"${data.Cleaned_Text || ''}"`;
+            readerOverlay.classList.add('active');
+
+            segments.forEach(s => {
+                s.classList.add('dimmed');
+                if(s.dataset.index == index) s.classList.remove('dimmed');
+            });
+        }
+
+        // 3. UI EVENTS
+        closeReader.onclick = () => {
+            readerOverlay.classList.remove('active');
+            docMap.style.transform = 'scale(1)';
+            document.querySelectorAll('.map-segment').forEach(s => s.classList.remove('dimmed'));
+        };
+
+        function initScroller() {
+            scroller.setup({ step: '.step', offset: 0.5 }).onStepEnter(handleStepEnter);
+            window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
+        }
+
+        // Initialize loading
+        loadCSV();
+    </script>
+</body>
+</html>
