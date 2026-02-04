@@ -79,10 +79,10 @@
             display: block; 
             padding: 40px 60px;
             background: #ffffff;
-            width: 95vw;
-            max-width: 1100px; 
+            width: 80vw; /* Reduced from 95vw to shape it like a book page */
+            max-width: 900px; /* Reduced to force vertical height */
             height: auto;
-            max-height: 98vh; /* Maximized height */
+            max-height: 98vh; 
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
             transform-origin: center 20%; 
             box-shadow: 0 20px 60px -20px rgba(0,0,0,0.05);
@@ -90,7 +90,7 @@
             /* The "Book Page" Texture */
             text-align: justify; 
             text-justify: inter-word;
-            line-height: 0.8; /* Very small space between lines */
+            line-height: 0.9; /* Slightly looser for bold text */
             overflow: hidden;
         }
 
@@ -106,7 +106,8 @@
             display: inline;
             /* Serif font for that dense book texture */
             font-family: 'Georgia', 'Times New Roman', serif; 
-            font-size: 3.2px; /* Micro-text */
+            font-size: 6px; /* Increased size significantly */
+            font-weight: bold; /* Bold text */
             letter-spacing: 0px;
             color: #334155;
             background-color: transparent !important;
@@ -115,7 +116,7 @@
             margin: 0;
             padding: 0;
             white-space: normal;
-            line-height: 1.1; /* Tight local line height */
+            line-height: 1.1; 
         }
 
         /* Mode 2: Bar Mode (Abstract Pattern) */
@@ -178,7 +179,7 @@
 
         @media (max-width: 768px) {
             .step-content { margin: 0 1rem; }
-            .document-map { padding: 20px; }
+            .document-map { padding: 20px; width: 95vw; }
         }
     </style>
 </head>
