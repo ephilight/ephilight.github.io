@@ -23,7 +23,7 @@
             justify-content: center;
             align-items: center;
             overflow: auto; /* Allow panning when zoomed */
-            padding: 40px;
+            padding: 20px;
             scroll-behavior: smooth;
         }
         #book-container {
@@ -45,7 +45,7 @@
             overflow: hidden;
         }
         .page-canvas {
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
@@ -161,7 +161,7 @@
         let pageFlip;
         const pagesRegistry = []; 
         
-        const scale = 2.0; // Higher scale for better zoom clarity
+        const scale = 2.0; 
         const RENDER_WINDOW = 4; 
         let currentZoom = 1.0;
 
@@ -175,12 +175,9 @@
                     const numPages = pdfDoc.numPages;
 
                     for (let i = 1; i <= numPages; i++) {
-                        if (fileIdx === 0 && i === 1) {
-                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'full');
-                        } else {
-                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'left');
-                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'right');
-                        }
+                        // Each PDF page is a horizontal spread. 
+                        // We treat the whole spread as one flippable sheet to maintain size.
+                        addPageToRegistry(globalBookIndex++, pdfDoc, i);
                     }
                 }
 
@@ -188,19 +185,20 @@
                 pageCountEl.textContent = `1 / ${totalPages}`;
                 pageSlider.max = totalPages - 1;
 
+                // Configure for Landscape view (one full spread at a time)
                 pageFlip = new St.PageFlip(bookElement, {
-                    width: 500, 
-                    height: 750,
+                    width: 1000, // Landscape ratio base
+                    height: 700,
                     size: 'stretch',
-                    minWidth: 200,
-                    maxWidth: 1200,
+                    minWidth: 400,
+                    maxWidth: 1600,
                     minHeight: 300,
                     maxHeight: 2000, 
                     maxShadowOpacity: 0.3,
                     showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
-                    usePortrait: true,
+                    usePortrait: true, // Shows one index (spread) in center
                     startPage: 0,
                     drawShadow: true,
                     clickEventForward: true
@@ -255,11 +253,10 @@
             }
         }
 
-        function addPageToRegistry(index, pdfDoc, pdfPageNum, type) {
+        function addPageToRegistry(index, pdfDoc, pdfPageNum) {
             pagesRegistry.push({
                 pdfDoc: pdfDoc,
                 pdfPageNumber: pdfPageNum,
-                type: type, 
                 isRendered: false
             });
 
@@ -300,9 +297,6 @@
             }
         }
 
-        const scratchCanvas = document.createElement('canvas');
-        const scratchCtx = scratchCanvas.getContext('2d');
-
         async function renderPageAtIndex(index) {
             const entry = pagesRegistry[index];
             const canvas = document.getElementById(`canvas-${index}`);
@@ -311,27 +305,12 @@
             try {
                 const page = await entry.pdfDoc.getPage(entry.pdfPageNumber);
                 const viewport = page.getViewport({ scale: scale });
-                
-                scratchCanvas.width = viewport.width;
-                scratchCanvas.height = viewport.height;
-                await page.render({ canvasContext: scratchCtx, viewport: viewport }).promise;
+                const ctx = canvas.getContext('2d');
 
-                const targetCtx = canvas.getContext('2d');
-
-                if (entry.type === 'full') {
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-                    targetCtx.drawImage(scratchCanvas, 0, 0);
-                } else if (entry.type === 'left') {
-                    canvas.width = viewport.width / 2;
-                    canvas.height = viewport.height;
-                    targetCtx.drawImage(scratchCanvas, 0, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
-                } else if (entry.type === 'right') {
-                    canvas.width = viewport.width / 2;
-                    canvas.height = viewport.height;
-                    targetCtx.drawImage(scratchCanvas, viewport.width / 2, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
-                }
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
                 entry.isRendered = true;
             } catch (err) {
                 console.error(`Failed to render book page ${index}`, err);
