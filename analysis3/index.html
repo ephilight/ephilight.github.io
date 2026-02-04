@@ -35,8 +35,13 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            z-index: 0;
+            z-index: 0; /* Default: Behind text */
             transition: all 0.5s ease;
+        }
+        
+        /* FIX: When exploring, move map ABOVE the scroll layer but BELOW the UI (300) */
+        body.is-exploring .sticky-graphic {
+            z-index: 100;
         }
 
         .scroll-text {
