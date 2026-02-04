@@ -98,7 +98,7 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const pdfPaths = ['diary1.pdf', 'diary2.pdf', 'diary3.pdf'];
+        const pdfPaths = ['Diary1.pdf', 'Diary2.pdf', 'Diary3.pdf'];
         const bookElement = document.getElementById('book');
         const container = document.getElementById('book-container');
         const loader = document.getElementById('loader');
@@ -194,7 +194,7 @@
 
             } catch (error) {
                 console.error("Error loading flipbook:", error);
-                loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Memory limit exceeded or missing files.<br>Ensure diary1.pdf, diary2.pdf, diary3.pdf are present.</p>`;
+                loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Memory limit exceeded or missing files.<br>Ensure Diary1.pdf, Diary2.pdf, Diary3.pdf are present.</p>`;
             }
         }
 
