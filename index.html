@@ -3,92 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scrollytelling Archive</title>
+    <title>Nineteen Ways of Looking at Ruth Mueller</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             background-color: #000000;
             color: #ffffff;
-            font-family: ui-sans-serif, system-ui, sans-serif;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         .story-card {
             transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         .story-card:hover {
-            padding-left: 2rem;
-            background-color: rgba(255, 255, 255, 0.03);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+            padding-left: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .nav-button {
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-button:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        .nav-button.active {
+            background-color: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+        .reveal-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+            opacity: 0;
+        }
+        .reveal-section.open {
+            max-height: 2000px;
+            opacity: 1;
         }
         .story-number {
             font-variant-numeric: tabular-nums;
+            min-width: 2rem;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <header class="h-[40vh] flex flex-col items-start justify-end px-[10%] pb-12">
-        <span class="text-xs uppercase tracking-[0.4em] text-zinc-500 mb-4">Digital Archive</span>
-        <h1 class="text-6xl md:text-8xl font-light tracking-tighter leading-none">
-            The <span class="italic font-serif">Stories</span>
+    <header class="min-h-[40vh] flex flex-col items-start justify-end px-[10%] pb-16">
+        <span class="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6">Digital Archival Exploration</span>
+        <h1 class="text-5xl md:text-7xl lg:text-8xl font-light tracking-tighter leading-[0.9] max-w-4xl">
+            Nineteen Ways of Looking at <span class="italic font-serif">Ruth Mueller</span>
         </h1>
     </header>
 
     <main class="px-[10%] pb-32">
-        <!-- Story 1 -->
-        <a href="./analysis1/index.html" class="story-card group block py-12">
-            <div class="flex items-baseline gap-8">
-                <span class="story-number text-sm text-zinc-600">01</span>
-                <div>
-                    <h2 class="text-3xl md:text-5xl font-light group-hover:italic transition-all">The Intimate Lexicon</h2>
-                    <p class="text-zinc-500 mt-4 max-w-md font-light leading-relaxed">
-                        An archival deconstruction of personal diaries through linguistic patterns and tactile evidence.
-                    </p>
-                </div>
-                <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                    <span class="text-xs uppercase tracking-widest text-zinc-400">Enter Story →</span>
-                </div>
+        
+        <!-- Primary Navigation Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+            <button onclick="toggleSection('reading')" id="btn-reading" class="nav-button group p-12 text-left flex flex-col justify-between aspect-[2/1] md:aspect-square lg:aspect-[2/1]">
+                <div><!-- Spacer for flex justify-between --></div>
+                <h2 class="text-4xl md:text-5xl font-light tracking-tight">Read the <br><span class="italic font-serif">Diary</span></h2>
+                <span class="text-xs uppercase tracking-widest mt-8 group-hover:translate-x-2 transition-transform inline-block">Explore the Narrative →</span>
+            </button>
+
+            <button onclick="toggleSection('analyze')" id="btn-analyze" class="nav-button group p-12 text-left flex flex-col justify-between aspect-[2/1] md:aspect-square lg:aspect-[2/1]">
+                <div><!-- Spacer for flex justify-between --></div>
+                <h2 class="text-4xl md:text-5xl font-light tracking-tight">Analyze the <br><span class="italic font-serif">Diary</span></h2>
+                <span class="text-xs uppercase tracking-widest mt-8 group-hover:translate-x-2 transition-transform inline-block">Explore Features →</span>
+            </button>
+        </div>
+
+        <!-- Section: Reading the Diary -->
+        <div id="section-reading" class="reveal-section">
+            <div class="py-4 mb-8 border-b border-zinc-800">
+                <h2 class="text-xs uppercase tracking-[0.3em] text-zinc-500 font-medium">Interacting with the Narrative</h2>
             </div>
-        </a>
-
-        <!-- Story 2 -->
-    
-         <a href="./analysis2/index.html" class="story-card group block py-12">
-            <div class="flex items-baseline gap-8">
-                <span class="story-number text-sm text-zinc-600">01</span>
-                <div>
-                    <h2 class="text-3xl md:text-5xl font-light group-hover:italic transition-all">Analysis2</h2>
-                    <p class="text-zinc-500 mt-4 max-w-md font-light leading-relaxed">
-                        test test test test
-                    </p>
-                </div>
-                <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                    <span class="text-xs uppercase tracking-widest text-zinc-400">Enter Story →</span>
-                </div>
+            <div class="grid grid-cols-1 gap-2">
+                <a href="/flipbook" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">01</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Flip through its pages</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">A virtual flip-book interface simulating the tactile experience.</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="/timeline" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">02</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Timeline Scrollyteller</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">Juxtaposing Ruth's personal entries against the historical timeline.</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="/nonlinear" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">03</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Non-linear Interface</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">An exploratory view of the diary's fragments.</p>
+                        </div>
+                    </div>
+                </a>
             </div>
-        </a>
+        </div>
 
-
-        <!-- Story 3 (Placeholder) -->
-         <a href="./analysis3/index.html" class="story-card group block py-12">
-            <div class="flex items-baseline gap-8">
-                <span class="story-number text-sm text-zinc-600">01</span>
-                <div>
-                    <h2 class="text-3xl md:text-5xl font-light group-hover:italic transition-all">Diary Micro-viewer</h2>
-                    <p class="text-zinc-500 mt-4 max-w-md font-light leading-relaxed">
-                        Micro-text, categorized by narrative mode
-                    </p>
-                </div>
-                <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
-                    <span class="text-xs uppercase tracking-widest text-zinc-400">Enter Story →</span>
-                </div>
+        <!-- Section: Analyze the Diary -->
+        <div id="section-analyze" class="reveal-section">
+            <div class="py-4 mb-8 border-b border-zinc-800">
+                <h2 class="text-xs uppercase tracking-[0.3em] text-zinc-500 font-medium">Archival Features & Evidence</h2>
             </div>
-        </a>
+            <div class="grid grid-cols-1 gap-2">
+                <a href="/content" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">04</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Words / Content</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">The Intimate Lexicon: linguistic patterns and narrative modes.</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="/form" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">05</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Form</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">Structural analysis of entries, handwriting, and spatial arrangement.</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="/materiality" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">06</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Materiality</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">The physical artifact: paper quality, ink degradation, and signs of use.</p>
+                        </div>
+                    </div>
+                </a>
+                <a href="/spatial" class="story-card group block py-8">
+                    <div class="flex items-baseline gap-6">
+                        <span class="story-number text-xs text-zinc-600">07</span>
+                        <div>
+                            <h3 class="text-2xl md:text-3xl font-light group-hover:italic transition-all">Spatial Ghosts</h3>
+                            <p class="text-zinc-500 mt-2 max-w-md text-sm font-light leading-relaxed">Mapping locations mentioned against the physical movements of the artifact.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
 
-    <footer class="p-[10%] border-t border-zinc-900 text-zinc-600 text-xs uppercase tracking-widest flex justify-between">
-        <span>© 2024 Scrollytelling Archive</span>
-        <a href="https://github.com" class="hover:text-white transition-colors">Source Code</a>
+        <!-- Meta section -->
+        <div class="mt-32 pt-12 border-t border-zinc-900 flex flex-col md:flex-row gap-12 text-sm font-light">
+            <a href="/about" class="text-zinc-400 hover:text-white transition-colors group">
+                <span class="block text-[10px] uppercase tracking-widest text-zinc-600 mb-2">Background</span>
+                About this Project <span class="group-hover:translate-x-1 inline-block transition-transform">→</span>
+            </a>
+            <a href="/methodology" class="text-zinc-400 hover:text-white transition-colors group">
+                <span class="block text-[10px] uppercase tracking-widest text-zinc-600 mb-2">Process</span>
+                Methodology <span class="group-hover:translate-x-1 inline-block transition-transform">→</span>
+            </a>
+        </div>
+
+    </main>
+
+    <footer class="px-[10%] py-12 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-[0.2em] flex justify-between">
+        <span>© 2024 Ruth Mueller Archive</span>
+        <div class="flex gap-8">
+            <a href="#" class="hover:text-white transition-colors">Metadata</a>
+            <a href="#" class="hover:text-white transition-colors">Institutional Access</a>
+        </div>
     </footer>
+
+    <script>
+        function toggleSection(type) {
+            const readingSection = document.getElementById('section-reading');
+            const analyzeSection = document.getElementById('section-analyze');
+            const readingBtn = document.getElementById('btn-reading');
+            const analyzeBtn = document.getElementById('btn-analyze');
+
+            if (type === 'reading') {
+                readingSection.classList.toggle('open');
+                readingBtn.classList.toggle('active');
+                
+                // Close other
+                analyzeSection.classList.remove('open');
+                analyzeBtn.classList.remove('active');
+            } else {
+                analyzeSection.classList.toggle('open');
+                analyzeBtn.classList.toggle('active');
+                
+                // Close other
+                readingSection.classList.remove('open');
+                readingBtn.classList.remove('active');
+            }
+
+            // Smooth scroll if opening
+            const targetSection = type === 'reading' ? readingSection : analyzeSection;
+            if (targetSection.classList.contains('open')) {
+                setTimeout(() => {
+                    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
+        }
+    </script>
 
 </body>
 </html>
