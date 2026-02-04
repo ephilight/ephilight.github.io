@@ -1,1 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading the Diary — Ruth Mueller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Simple Page Flip -->
+    <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow: hidden; /* Prevent scrolling, let the book take center stage */
+        }
+        #book-container {
+            height: 80vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #book-container.ready {
+            opacity: 1;
+        }
+        .page-canvas {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+            background-color: #1a1a1a;
+        }
+        .controls {
+            transition: opacity 0.3s ease;
+        }
+        .controls:hover {
+            opacity: 1;
+        }
+        /* Custom scrollbar for the loading state if needed */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-zinc-800 h-screen flex flex-col">
 
+    <!-- Header -->
+    <header class="flex justify-between items-center px-8 py-6 border-b border-zinc-900 z-10 bg-black/50 backdrop-blur-sm fixed top-0 w-full">
+        <div>
+            <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-500 block">Archival Viewer</span>
+            <h1 class="text-xl font-light tracking-tight text-zinc-200">The Diary <span class="italic font-serif text-zinc-400">Flipbook</span></h1>
+        </div>
+        <div class="flex gap-4 items-center">
+            <div id="page-count" class="text-xs font-mono text-zinc-500 tracking-widest">
+                LOADING...
+            </div>
+            <a href="index.html" class="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white transition-colors border border-zinc-800 px-3 py-1 rounded-full hover:border-zinc-600">
+                Close
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Flipbook Area -->
+    <main class="flex-grow flex flex-col justify-center items-center relative pt-20">
+        
+        <!-- Loading Indicator -->
+        <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-0">
+            <div class="w-12 h-12 border-t-2 border-zinc-700 rounded-full animate-spin"></div>
+            <p class="text-xs uppercase tracking-widest text-zinc-600 animate-pulse">Initializing Artifact...</p>
+        </div>
+
+        <!-- Book Container -->
+        <div id="book-container">
+            <div id="book" class="relative">
+                <!-- Pages will be injected here by JS -->
+            </div>
+        </div>
+
+        <!-- Navigation Controls (Bottom Fixed) -->
+        <div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-60">
+            <button id="btn-prev" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pr-8 hover:border-zinc-600">
+                <span class="text-zinc-400 group-hover:text-white transition-colors">←</span>
+                <span class="text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300">Prev</span>
+            </button>
+            <button id="btn-next" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pl-8 hover:border-zinc-600">
+                <span class="text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300">Next</span>
+                <span class="text-zinc-400 group-hover:text-white transition-colors">→</span>
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // PDF.js Worker Setup
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        const pdfPath = 'Diary.pdf';
+        const bookElement = document.getElementById('book');
+        const container = document.getElementById('book-container');
+        const loader = document.getElementById('loader');
+        const pageCountEl = document.getElementById('page-count');
+        
+        let pageFlip;
+        let pdfDoc = null;
+
+        // Configuration
+        const scale = 1.5; // Render quality (higher = sharper)
+
+        async function initBook() {
+            try {
+                // 1. Load PDF
+                const loadingTask = pdfjsLib.getDocument(pdfPath);
+                pdfDoc = await loadingTask.promise;
+                
+                const numPages = pdfDoc.numPages;
+                pageCountEl.textContent = `PAGE 1 OF ${numPages}`;
+
+                // 2. Render all pages to canvases
+                // Note: For very large PDFs, lazy loading is better, but for a diary chapter (e.g. < 50 pages), rendering all works for smoothness.
+                const renderPromises = [];
+
+                for (let i = 1; i <= numPages; i++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.classList.add('page-wrapper', 'bg-zinc-900'); // Wrapper required for PageFlip styling in some modes
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.classList.add('page-canvas', 'w-full', 'h-full', 'object-contain');
+                    
+                    wrapper.appendChild(canvas);
+                    bookElement.appendChild(wrapper);
+
+                    renderPromises.push(renderPage(i, canvas));
+                }
+
+                await Promise.all(renderPromises);
+
+                // 3. Initialize Flipbook
+                // We assume the PDF contains Spreads (Landscape), so we use 'single' mode to flip one wide sheet at a time.
+                pageFlip = new St.PageFlip(bookElement, {
+                    width: 800,  // Base dimensions - will scale responsive
+                    height: 500,
+                    size: 'stretch',
+                    minWidth: 300,
+                    maxWidth: 1600,
+                    minHeight: 200,
+                    maxHeight: 1000,
+                    maxShadowOpacity: 0.5,
+                    showCover: false, // Treat all pages equally
+                    mobileScrollSupport: false, // Disable native scroll on mobile to use touch for flip
+                    flippingTime: 800, // ms
+                    usePortrait: false, // Force landscape mode logic since pages are spreads
+                    startPage: 0
+                });
+
+                pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
+
+                // 4. Reveal UI
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+                container.classList.add('ready');
+
+                // 5. Event Listeners
+                pageFlip.on('flip', (e) => {
+                    // Update page count (index starts at 0, PDF pages at 1)
+                    pageCountEl.textContent = `PAGE ${e.data + 1} OF ${numPages}`;
+                });
+
+                document.getElementById('btn-prev').addEventListener('click', () => {
+                    pageFlip.flipPrev();
+                });
+
+                document.getElementById('btn-next').addEventListener('click', () => {
+                    pageFlip.flipNext();
+                });
+
+            } catch (error) {
+                console.error("Error loading flipbook:", error);
+                loader.innerHTML = `<p class="text-red-500 font-mono text-center">Error loading PDF.<br>Ensure 'Diary.pdf' is in the root folder.</p>`;
+            }
+        }
+
+        async function renderPage(num, canvas) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+            const context = canvas.getContext('2d');
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            
+            return page.render(renderContext).promise;
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initBook);
+
+    </script>
+</body>
+</html>
