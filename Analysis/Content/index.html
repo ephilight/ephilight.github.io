@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Words: Structural Analysis — Ruth Mueller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .nav-card {
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .nav-card:hover {
+            padding-left: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .item-number {
+            font-variant-numeric: tabular-nums;
+            min-width: 2rem;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-zinc-800">
+
+    <div class="container mx-auto max-w-4xl px-[10%] py-20 md:py-32">
+        <header class="mb-24">
+            <span class="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 block">Features of the Diary</span>
+            <h1 class="text-5xl md:text-7xl font-light tracking-tighter leading-none mb-6">
+                The <span class="italic font-serif">Words</span>
+            </h1>
+            <p class="text-zinc-400 max-w-xl font-light leading-relaxed">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+            </p>
+        </header>
+
+        <main class="space-y-2">
+            <!-- Project 01 -->
+            <a href="#" class="nav-card group block py-10">
+                <div class="flex items-baseline gap-8">
+                    <span class="item-number text-xs text-zinc-600 font-mono">01</span>
+                    <div class="flex-1">
+                        <h2 class="text-3xl md:text-4xl font-light group-hover:italic transition-all duration-500">Lorem Ipsum Dolor</h2>
+                        <p class="text-zinc-500 mt-3 max-w-md text-sm font-light leading-relaxed">
+                            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                        </p>
+                    </div>
+                    <div class="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] uppercase tracking-widest text-zinc-400">View Project →</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Project 02 -->
+            <a href="#" class="nav-card group block py-10">
+                <div class="flex items-baseline gap-8">
+                    <span class="item-number text-xs text-zinc-600 font-mono">02</span>
+                    <div class="flex-1">
+                        <h2 class="text-3xl md:text-4xl font-light group-hover:italic transition-all duration-500">Sit Amet Consectetur</h2>
+                        <p class="text-zinc-500 mt-3 max-w-md text-sm font-light leading-relaxed">
+                            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+                        </p>
+                    </div>
+                    <div class="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] uppercase tracking-widest text-zinc-400">View Project →</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Project 03 -->
+            <a href="#" class="nav-card group block py-10">
+                <div class="flex items-baseline gap-8">
+                    <span class="item-number text-xs text-zinc-600 font-mono">03</span>
+                    <div class="flex-1">
+                        <h2 class="text-3xl md:text-4xl font-light group-hover:italic transition-all duration-500">Adipiscing Elit</h2>
+                        <p class="text-zinc-500 mt-3 max-w-md text-sm font-light leading-relaxed">
+                            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                    </div>
+                    <div class="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] uppercase tracking-widest text-zinc-400">View Project →</span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Project 04 -->
+            <a href="#" class="nav-card group block py-10">
+                <div class="flex items-baseline gap-8">
+                    <span class="item-number text-xs text-zinc-600 font-mono">04</span>
+                    <div class="flex-1">
+                        <h2 class="text-3xl md:text-4xl font-light group-hover:italic transition-all duration-500">Sed Do Eiusmod</h2>
+                        <p class="text-zinc-500 mt-3 max-w-md text-sm font-light leading-relaxed">
+                            Sunt in culpa qui officia deserunt mollit anim id est laborum. Ut enim ad minim veniam, quis nostrud exercitation.
+                        </p>
+                    </div>
+                    <div class="hidden md:block opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[10px] uppercase tracking-widest text-zinc-400">View Project →</span>
+                    </div>
+                </div>
+            </a>
+        </main>
+
+        <footer class="mt-32 pt-12 border-t border-zinc-900 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex flex-col gap-1">
+                <span class="text-zinc-600 text-[10px] uppercase tracking-widest">Part of Nineteen Ways of Looking at Ruth Mueller</span>
+                <span class="text-zinc-700 text-[10px] uppercase tracking-widest">Category 04: Content</span>
+            </div>
+            <a href="#" class="text-zinc-400 hover:text-white transition-colors text-[10px] uppercase tracking-[0.3em]">
+                ← Back to Index
+            </a>
+        </footer>
+    </div>
+
+</body>
+</html>
