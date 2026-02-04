@@ -17,13 +17,14 @@
             overflow: hidden;
         }
         #book-container {
-            height: 80vh;
+            height: 90vh; /* Increased vertical space */
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             transition: opacity 1s ease;
+            padding: 20px;
         }
         #book-container.ready {
             opacity: 1;
@@ -33,11 +34,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
         .page-canvas {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
             max-width: 100%;
             max-height: 100%;
+            object-fit: contain;
         }
         .controls {
             transition: opacity 0.3s ease;
@@ -50,7 +53,7 @@
 <body class="antialiased selection:bg-zinc-800 h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="flex justify-between items-center px-8 py-6 border-b border-zinc-900 z-10 bg-black/50 backdrop-blur-sm fixed top-0 w-full">
+    <header class="flex justify-between items-center px-8 py-4 border-b border-zinc-900 z-10 bg-black/50 backdrop-blur-sm fixed top-0 w-full">
         <div>
             <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-500 block">Archival Viewer</span>
             <h1 class="text-xl font-light tracking-tight text-zinc-200">The Diary <span class="italic font-serif text-zinc-400">Flipbook</span></h1>
@@ -66,7 +69,7 @@
     </header>
 
     <!-- Main Flipbook Area -->
-    <main class="flex-grow flex flex-col justify-center items-center relative pt-20">
+    <main class="flex-grow flex flex-col justify-center items-center relative pt-16">
         
         <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-0">
             <div class="w-12 h-12 border-t-2 border-zinc-700 rounded-full animate-spin"></div>
@@ -80,7 +83,7 @@
         </div>
 
         <!-- Navigation Controls -->
-        <div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-60">
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-60">
             <button id="btn-prev" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pr-8 hover:border-zinc-600">
                 <span class="text-zinc-400 group-hover:text-white transition-colors">←</span>
                 <span class="text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300">Prev</span>
@@ -104,8 +107,8 @@
         let pageFlip;
         const pagesRegistry = []; 
         
-        const scale = 1.8; // High res for zoomed viewing
-        const RENDER_WINDOW = 4; // Buffer for smooth turning
+        const scale = 1.8; 
+        const RENDER_WINDOW = 4; 
 
         async function initBook() {
             try {
@@ -117,11 +120,9 @@
                     const numPages = pdfDoc.numPages;
 
                     for (let i = 1; i <= numPages; i++) {
-                        // First page of First PDF is the single cover
                         if (fileIdx === 0 && i === 1) {
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'full');
                         } else {
-                            // Split pages into Left and Right halves
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'left');
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'right');
                         }
@@ -130,21 +131,22 @@
 
                 pageCountEl.textContent = `PAGE 1 OF ${pagesRegistry.length}`;
 
-                // Setup PageFlip for single-page portrait view (one flippable page in center)
+                // Setup PageFlip with more flexible constraints to ensure the "whole" page fits
                 pageFlip = new St.PageFlip(bookElement, {
-                    width: 500, // Ratio of a single diary page
+                    width: 500, 
                     height: 750,
                     size: 'stretch',
-                    minWidth: 300,
-                    maxWidth: 1000,
-                    minHeight: 450,
-                    maxHeight: 1500,
-                    maxShadowOpacity: 0.5,
+                    minWidth: 200,
+                    maxWidth: 1200,
+                    minHeight: 300,
+                    maxHeight: 2000, // Increased to allow full height visibility
+                    maxShadowOpacity: 0.3,
                     showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
-                    usePortrait: true, // Center single pages
-                    startPage: 0
+                    usePortrait: true,
+                    startPage: 0,
+                    drawShadow: true
                 });
 
                 pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
@@ -174,7 +176,7 @@
             pagesRegistry.push({
                 pdfDoc: pdfDoc,
                 pdfPageNumber: pdfPageNum,
-                type: type, // 'full', 'left', or 'right'
+                type: type, 
                 isRendered: false
             });
 
@@ -215,7 +217,6 @@
             }
         }
 
-        // Dedicated offscreen canvas for initial spread rendering
         const scratchCanvas = document.createElement('canvas');
         const scratchCtx = scratchCanvas.getContext('2d');
 
@@ -228,12 +229,10 @@
                 const page = await entry.pdfDoc.getPage(entry.pdfPageNumber);
                 const viewport = page.getViewport({ scale: scale });
                 
-                // 1. Render the full spread to the offscreen scratch canvas
                 scratchCanvas.width = viewport.width;
                 scratchCanvas.height = viewport.height;
                 await page.render({ canvasContext: scratchCtx, viewport: viewport }).promise;
 
-                // 2. Extract the specific half and draw to the visible canvas
                 const targetCtx = canvas.getContext('2d');
 
                 if (entry.type === 'full') {
@@ -243,12 +242,10 @@
                 } else if (entry.type === 'left') {
                     canvas.width = viewport.width / 2;
                     canvas.height = viewport.height;
-                    // Draw the left half
                     targetCtx.drawImage(scratchCanvas, 0, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
                 } else if (entry.type === 'right') {
                     canvas.width = viewport.width / 2;
                     canvas.height = viewport.height;
-                    // Draw the right half
                     targetCtx.drawImage(scratchCanvas, viewport.width / 2, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
                 }
                 
