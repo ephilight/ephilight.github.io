@@ -91,19 +91,6 @@
             white-space: normal; 
         }
 
-        /* Expansion for Explore Mode */
-        .document-map.full-screen {
-            width: 100vw;
-            height: 100vh;
-            max-width: none;
-            padding: 10px;
-            display: flex;
-            flex-wrap: wrap;
-            align-content: flex-start;
-            gap: 1px;
-            overflow-y: auto;
-        }
-
         /* --- SEGMENT STYLING --- */
         .map-segment {
             transition: color 0.4s ease, background-color 0.4s ease, transform 0.3s ease, font-size 0.4s ease, width 0.4s;
@@ -459,11 +446,9 @@
 
             if (stepId === 'explore') {
                 document.body.classList.add('is-exploring');
-                docMap.classList.add('full-screen');
                 isExploreMode = true;
             } else {
                 document.body.classList.remove('is-exploring');
-                docMap.classList.remove('full-screen');
                 isExploreMode = false;
             }
 
@@ -480,7 +465,8 @@
                     break;
                 case 'valuable-patterns': 
                 case 'explore': 
-                    applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
+                    // Changed zoom to 1.2 for "a little larger" and kept standard container mode
+                    applyVisualState(segments, { mode: 'bar', color: true, zoom: 1.2 });
                     break;
             }
         }
