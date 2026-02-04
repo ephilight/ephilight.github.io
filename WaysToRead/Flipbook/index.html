@@ -17,7 +17,7 @@
             overflow: hidden;
         }
         #book-container {
-            height: 90vh; /* Increased vertical space */
+            height: 90vh; /* Increased vertical space as requested */
             width: 100%;
             display: flex;
             justify-content: center;
@@ -123,6 +123,7 @@
                         if (fileIdx === 0 && i === 1) {
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'full');
                         } else {
+                            // Split pages into Left and Right halves
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'left');
                             addPageToRegistry(globalBookIndex++, pdfDoc, i, 'right');
                         }
@@ -131,7 +132,7 @@
 
                 pageCountEl.textContent = `PAGE 1 OF ${pagesRegistry.length}`;
 
-                // Setup PageFlip with more flexible constraints to ensure the "whole" page fits
+                // Setup PageFlip with Portrait centering to show one page at a time
                 pageFlip = new St.PageFlip(bookElement, {
                     width: 500, 
                     height: 750,
@@ -139,14 +140,15 @@
                     minWidth: 200,
                     maxWidth: 1200,
                     minHeight: 300,
-                    maxHeight: 2000, // Increased to allow full height visibility
+                    maxHeight: 2000, 
                     maxShadowOpacity: 0.3,
                     showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
                     usePortrait: true,
                     startPage: 0,
-                    drawShadow: true
+                    drawShadow: true,
+                    clickEventForward: true
                 });
 
                 pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
@@ -163,8 +165,14 @@
                     updateVisiblePages(idx);
                 });
 
-                document.getElementById('btn-prev').addEventListener('click', () => pageFlip.flipPrev());
-                document.getElementById('btn-next').addEventListener('click', () => pageFlip.flipNext());
+                // Explicitly set corner for the flip animation from buttons
+                document.getElementById('btn-prev').addEventListener('click', () => {
+                    pageFlip.flipPrev('bottom');
+                });
+
+                document.getElementById('btn-next').addEventListener('click', () => {
+                    pageFlip.flipNext('bottom');
+                });
 
             } catch (error) {
                 console.error("Error loading flipbook:", error);
