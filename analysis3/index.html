@@ -18,13 +18,12 @@
             color: #1e293b; 
         }
 
-        /* --- SCROLLY LAYOUT (Overlay Style) --- */
+        /* --- SCROLLY LAYOUT --- */
         #scrolly {
             position: relative;
             display: block;
         }
 
-        /* Background Map (Fixed/Sticky) */
         .sticky-graphic {
             position: fixed;
             top: 0;
@@ -40,17 +39,16 @@
             transition: all 0.5s ease;
         }
 
-        /* Foreground Text (Overlay) */
         .scroll-text {
             position: relative;
             z-index: 20;
-            pointer-events: none; /* Allow clicking through to map */
-            padding-bottom: 50vh; /* Spacer for end */
+            pointer-events: none;
+            padding-bottom: 50vh;
         }
         
         .step {
             margin: 0 auto;
-            min-height: 100vh; /* Full height steps */
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -58,7 +56,7 @@
 
         .step-content {
             pointer-events: auto;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(12px);
             padding: 2.5rem;
             border-radius: 12px;
@@ -67,7 +65,7 @@
             transition: all 0.5s ease;
             opacity: 0;
             transform: translateY(20px);
-            max-width: 36rem;
+            max-width: 32rem;
             text-align: center;
         }
 
@@ -77,41 +75,38 @@
         .document-map {
             position: relative;
             display: block; 
-            padding: 40px 60px;
+            padding: 30px 40px;
             background: #ffffff;
             width: 95vw;
-            max-width: 1100px; 
+            max-width: 1000px; 
             height: auto;
-            max-height: 95vh; /* Keep it within view */
-            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
-            transform-origin: center 20%; 
-            box-shadow: 0 20px 60px -20px rgba(0,0,0,0.05);
+            /* Remove strict max-height to allow full text fitting */
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, font-size 0.5s;
+            transform-origin: center center; 
             
-            /* The "Book Page" Texture */
+            /* Text Texture Styling */
             text-align: justify; 
             text-justify: inter-word;
-            line-height: 1.35; 
-            overflow: hidden;
+            line-height: 1.15; 
+            overflow: visible;
         }
 
-        /* --- SEGMENT STYLING (The Morphing Elements) --- */
+        /* --- SEGMENT STYLING --- */
         .map-segment {
-            transition: color 0.5s ease, background-color 0.5s ease, transform 0.4s ease;
-            border-radius: 2px;
+            transition: color 0.4s ease, background-color 0.4s ease, transform 0.3s ease, font-size 0.4s ease;
+            border-radius: 1px;
             cursor: default;
+            display: inline;
         }
 
-        /* Mode 1: Text Mode (Overview/Close Read) */
+        /* Mode 1: Text Mode (The Dense Block) */
         .map-segment.mode-text {
-            display: inline;
-            /* Serif font for that dense book texture */
             font-family: 'Georgia', 'Times New Roman', serif; 
-            font-size: 3.2px; /* Micro-text tuned for 1080 sentences */
-            letter-spacing: 0px;
-            color: #334155;
+            /* Reduced font size slightly to guarantee fitting 1000+ sentences */
+            font-size: 2.8px; 
+            letter-spacing: -0.1px;
+            color: #475569;
             background-color: transparent !important;
-            width: auto !important;
-            height: auto !important;
             margin: 0;
             padding: 0;
             white-space: normal;
@@ -121,24 +116,24 @@
         .map-segment.mode-bar {
             display: inline-block; 
             vertical-align: middle;
-            font-size: 0px; /* Hide text */
-            color: transparent;
-            height: 10px;
+            font-size: 0px !important; 
+            color: transparent !important;
+            height: 8px;
             margin: 1px;
-            border-radius: 2px;
+            border-radius: 1px;
             mix-blend-mode: multiply;
             white-space: nowrap;
         }
 
         /* Interactive State */
         .map-segment.interactive { cursor: pointer; }
-        .map-segment.interactive:hover { transform: scale(1.2); z-index: 50; filter: contrast(1.1); position: relative; }
+        .map-segment.interactive:hover { transform: scale(1.4); z-index: 50; filter: contrast(1.2); position: relative; }
 
-        /* --- EXPLORE UI (Header/Footer) --- */
+        /* --- EXPLORE UI --- */
         #tool-header, #legend-footer {
             opacity: 0;
             pointer-events: none;
-            transition: opacity 1s ease 0.5s;
+            transition: opacity 0.8s ease;
         }
         
         body.is-exploring #tool-header, 
@@ -165,7 +160,6 @@
             transition: all 0.2s; cursor: pointer; color: #64748b;
         }
         .reader-sentence.focused { color: #0f172a; font-weight: 600; background: #f1f5f9; box-shadow: 0 0 0 2px #cbd5e1; }
-        .highlighted-text { background: inherit; }
 
         /* Utility */
         .Nazi-highlight { outline: 2px solid #ef4444 !important; outline-offset: 1px; z-index: 40; }
@@ -176,8 +170,8 @@
         .legend-item.active { border-color: #334155 !important; background-color: #f8fafc !important; }
 
         @media (max-width: 768px) {
-            .step-content { margin: 0 1rem; }
-            .document-map { padding: 20px; }
+            .map-segment.mode-text { font-size: 1.8px; }
+            .step-content { margin: 0 1rem; padding: 1.5rem; }
         }
     </style>
 </head>
@@ -205,16 +199,16 @@
         </div>
     </div>
 
-    <!-- MAIN VISUALIZATION (Fixed Background) -->
+    <!-- MAIN VISUALIZATION -->
     <div class="sticky-graphic">
         <div id="viz-container">
             <div id="document-map" class="document-map">
-                <div class="text-slate-300 animate-pulse text-center mt-20 font-mono text-sm">Loading Archive Data...</div>
+                <div class="text-slate-300 animate-pulse text-center mt-20 font-mono text-sm uppercase tracking-widest">Compiling Archive...</div>
             </div>
         </div>
     </div>
 
-    <!-- SCROLLING NARRATIVE (Overlay) -->
+    <!-- SCROLLING NARRATIVE -->
     <main id="scrolly">
         <article class="scroll-text">
             
@@ -228,10 +222,10 @@
 
             <section class="step" data-step="overview">
                 <div class="step-content">
-                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 1: The Raw Text</h3>
+                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 1: The Whole Text</h3>
                     <h2 class="text-3xl font-bold mb-4">Reading 1,080 sentences at once.</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Behind this card is the entire diary corpus. Rendered in micro-script, we can perceive the sheer volume of the archive. By ignoring traditional breaks, the text flows as a single, dense narrative block.
+                        Behind this card is the entirety of the diary. Rendered in micro-script, we can perceive the total volume of the archive on a single page. Every word is present, flowing as one dense block of memory.
                     </p>
                 </div>
             </section>
@@ -240,7 +234,7 @@
                 <div class="step-content">
                     <h2 class="text-3xl font-bold mb-4">Structure without Meaning</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        We can see the flow of words, but without a lens to interpret this data, it remains a "grey mass"—opaque, justified, and overwhelming.
+                        Without a lens to interpret this data, the archive remains an opaque, justified mass—a texture of life that is difficult to navigate by sight alone.
                     </p>
                 </div>
             </section>
@@ -250,7 +244,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 2: Modeling</h3>
                     <h2 class="text-3xl font-bold mb-4">Categorizing the Experience</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Let's zoom in. By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The justified block is now color-coded.
+                        By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The block is now illuminated by its content.
                     </p>
                 </div>
             </section>
@@ -260,7 +254,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 3: Abstraction</h3>
                     <h2 class="text-3xl font-bold mb-4">Patterns Emerge</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        Zooming back out, we switch to an abstract view. The text becomes bars. Now, the "grey mass" reveals its rhythm. We see seasons of introspection (pink) versus periods of political turmoil (green).
+                        We switch to an abstract view. The sentences become bars. Now, the "grey mass" reveals its rhythm. We see seasons of introspection (pink) versus periods of political turmoil (green).
                     </p>
                 </div>
             </section>
@@ -270,7 +264,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 4: Exploration</h3>
                     <h2 class="text-3xl font-bold mb-4">The Archive is Yours</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        The narrative ends here. The tool will now expand to full screen. You can filter, search, and click on any segment to read the original entry.
+                        The narrative ends here. The tool is now yours. You can filter by category, search for keywords, or click any segment to enter the reader and see the history behind the data.
                     </p>
                 </div>
             </section>
@@ -282,7 +276,7 @@
     <!-- FOOTER LEGEND -->
     <footer id="legend-footer" class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur border-t border-slate-100 py-4 z-[300]">
         <div class="max-w-6xl mx-auto flex flex-col items-center gap-2">
-            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Active Filter</span>
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Archive Legend</span>
             <div id="legend-items" class="flex flex-wrap justify-center gap-2"></div>
         </div>
     </footer>
@@ -312,18 +306,18 @@
         let isExploreMode = false;
         
         const palette = [
-            '#facc15', // 0: Social (Yellow)
-            '#f472b6', // 1: Reflection (Pink)
-            '#a78bfa', // 2: Temp/Spat (Purple)
-            '#60a5fa', // 3: Blue
-            '#fb7185', // 4: Romantic (Rose)
-            '#4ade80', // 5: Event (Green)
+            '#facc15', // Social
+            '#f472b6', // Reflection
+            '#a78bfa', // Temp/Spat
+            '#60a5fa', 
+            '#fb7185', // Romantic
+            '#4ade80', // Event/Political
             '#2dd4bf', '#fb923c', '#a3e635', '#94a3b8'
         ];
         const colorMaps = { Category: {}, Subcategory: {} };
 
-        // 1. DATA LOADING
         const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
+        
         function loadCSV() {
             Papa.parse(encodeURI(csvFileName), {
                 download: true, header: true, skipEmptyLines: true,
@@ -341,7 +335,6 @@
                 const vals = [...new Set(diaryData.map(r => r[field]).filter(Boolean))].sort();
                 const map = colorMaps[field];
                 
-                // Manual overrides for consistency
                 if (vals.includes('Social')) map['Social'] = palette[0];
                 if (vals.includes('Reflection')) map['Reflection'] = palette[1];
                 if (vals.includes('Temp/Spat')) map['Temp/Spat'] = field === 'Subcategory' ? 'transparent' : palette[2];
@@ -361,7 +354,6 @@
             readerContent.innerHTML = '';
             
             diaryData.forEach((row, i) => {
-                // VISUAL SEGMENT
                 const segment = document.createElement('span');
                 segment.className = 'map-segment mode-text'; 
                 segment.dataset.index = i;
@@ -371,7 +363,7 @@
                 segment.dataset.text = (row.Cleaned_Text || "").toLowerCase();
                 segment.innerText = row.Cleaned_Text + " "; 
                 
-                const barWidth = Math.min(Math.max((row.Cleaned_Text || "").length / 3.5, 10), 80);
+                const barWidth = Math.min(Math.max((row.Cleaned_Text || "").length / 3, 8), 100);
                 segment.dataset.barWidth = barWidth;
 
                 segment.onmouseenter = (e) => {
@@ -385,7 +377,6 @@
                 segment.onclick = (e) => { if (isExploreMode) zoomIn(e, i); };
                 docMap.appendChild(segment);
 
-                // READER ELEMENT
                 const span = document.createElement('span');
                 span.className = 'reader-sentence';
                 span.id = `reader-s-${i}`;
@@ -409,7 +400,7 @@
                 if (field === 'Subcategory' && name === 'Temp/Spat') return;
                 const item = document.createElement('div');
                 item.className = `legend-item flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer select-none`;
-                item.innerHTML = `<div class="w-3 h-3 rounded-full" style="background:${color}"></div>${name}`;
+                item.innerHTML = `<div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div>${name}`;
                 item.onclick = () => {
                     if (!isExploreMode) return;
                     activeFilter = (activeFilter === name) ? null : name;
@@ -421,7 +412,6 @@
             });
         }
 
-        // 2. SCROLLAMA LOGIC
         function handleStepEnter(response) {
             const stepId = response.element.getAttribute('data-step');
             response.element.classList.add('is-active');
@@ -440,15 +430,13 @@
                     applyVisualState(segments, { mode: 'text', color: false, zoom: 1 });
                     break;
                 case 'meaningless': 
-                    applyVisualState(segments, { mode: 'text', color: false, zoom: 1.1 });
+                    applyVisualState(segments, { mode: 'text', color: false, zoom: 1.15 });
                     break;
                 case 'zoom-label': 
-                    const targetIdx = diaryData.findIndex(d => d.Category === 'Reflection');
+                    const targetIdx = diaryData.findIndex(d => d.Category === 'Reflection') || 100;
                     applyVisualState(segments, { mode: 'text', color: true, zoom: 3.5, centerIdx: targetIdx });
                     break;
                 case 'valuable-patterns': 
-                    applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
-                    break;
                 case 'explore': 
                     applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
                     break;
@@ -468,24 +456,20 @@
                     s.classList.add('mode-bar');
                     s.classList.remove('mode-text');
                     s.style.width = s.dataset.barWidth + 'px'; 
-                    s.innerText = ''; // clear text for bar mode
+                    s.innerText = ''; 
                 }
 
                 if (color) {
                     const c = colorMaps[field][diaryData[i][field]] || '#cbd5e1';
                     if (mode === 'text') {
                         s.style.color = c;
-                        s.style.backgroundColor = 'transparent';
                     } else {
-                        s.style.color = 'transparent';
                         s.style.backgroundColor = c;
                     }
                 } else {
                     if (mode === 'text') {
-                        s.style.color = '#334155'; 
-                        s.style.backgroundColor = 'transparent';
+                        s.style.color = '#475569'; 
                     } else {
-                        s.style.color = 'transparent';
                         s.style.backgroundColor = '#e2e8f0'; 
                     }
                 }
@@ -503,12 +487,11 @@
                 docMap.style.transformOrigin = `${ox}% ${oy}%`;
                 docMap.style.transform = `scale(${zoom})`;
             } else {
+                docMap.style.transformOrigin = 'center center';
                 docMap.style.transform = `scale(${zoom})`;
-                if (zoom === 1) docMap.style.transformOrigin = 'center 20%'; 
             }
         }
 
-        // 3. TOOL INTERACTIVITY
         function updateColors() {
             const field = colorMode.value;
             if (isExploreMode) {
@@ -549,7 +532,7 @@
             const ox = ((event.clientX - rect.left) / rect.width) * 100;
             const oy = ((event.clientY - rect.top) / rect.height) * 100;
             docMap.style.transformOrigin = `${ox}% ${oy}%`;
-            docMap.style.transform = 'scale(4.5)';
+            docMap.style.transform = 'scale(4)';
             docMap.style.opacity = '0';
             setTimeout(() => {
                 readerView.classList.add('active');
@@ -579,7 +562,7 @@
         };
 
         function initScroller() {
-            scroller.setup({ step: '.step', offset: 0.6 }).onStepEnter(handleStepEnter);
+            scroller.setup({ step: '.step', offset: 0.5 }).onStepEnter(handleStepEnter);
             window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
         }
 
