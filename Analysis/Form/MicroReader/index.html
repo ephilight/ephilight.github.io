@@ -595,7 +595,7 @@
 
         function initScroller() {
             // Updated offset to 0.15 so triggers happen higher up the page
-            scroller.setup({ step: '.step', offset: 0.15 }).onStepEnter(handleStepEnter);
+            scroller.setup({ step: '.step', offset: 0.05 }).onStepEnter(handleStepEnter);
             window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
         }
 
