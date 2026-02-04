@@ -82,7 +82,7 @@
             width: 95vw;
             max-width: 1100px; 
             height: auto;
-            max-height: 95vh; /* Keep it within view */
+            max-height: 98vh; /* Maximized height */
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s;
             transform-origin: center 20%; 
             box-shadow: 0 20px 60px -20px rgba(0,0,0,0.05);
@@ -90,7 +90,7 @@
             /* The "Book Page" Texture */
             text-align: justify; 
             text-justify: inter-word;
-            line-height: 1.35; 
+            line-height: 0.8; /* Very small space between lines */
             overflow: hidden;
         }
 
@@ -106,7 +106,7 @@
             display: inline;
             /* Serif font for that dense book texture */
             font-family: 'Georgia', 'Times New Roman', serif; 
-            font-size: 3.2px; /* Micro-text tuned for 1080 sentences */
+            font-size: 3.2px; /* Micro-text */
             letter-spacing: 0px;
             color: #334155;
             background-color: transparent !important;
@@ -115,6 +115,7 @@
             margin: 0;
             padding: 0;
             white-space: normal;
+            line-height: 1.1; /* Tight local line height */
         }
 
         /* Mode 2: Bar Mode (Abstract Pattern) */
@@ -323,17 +324,30 @@
         const colorMaps = { Category: {}, Subcategory: {} };
 
         // 1. DATA LOADING
-        const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
-        function loadCSV() {
-            Papa.parse(encodeURI(csvFileName), {
-                download: true, header: true, skipEmptyLines: true,
-                complete: (results) => {
-                    diaryData = results.data;
+        function loadData() {
+            fetch('diary.txt')
+                .then(r => r.text())
+                .then(text => {
+                    // Split text by newlines (assuming one sentence/paragraph per line)
+                    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+                    
+                    diaryData = lines.map((line, i) => ({
+                        Cleaned_Text: line.trim(),
+                        // Default values for missing CSV columns to maintain code structure
+                        Category: 'Unlabeled',
+                        Subcategory: 'Unlabeled',
+                        Nazi: 'NO'
+                    }));
+                    
                     initColors();
                     renderViews();
                     initScroller();
-                }
-            });
+                })
+                .catch(err => {
+                    console.error("Error loading diary.txt:", err);
+                    document.getElementById('document-map').innerHTML = 
+                        '<div class="text-red-400 text-center mt-20 font-mono text-sm">Error: "diary.txt" not found.<br>Please ensure the file exists in the repository.</div>';
+                });
         }
 
         function initColors() {
@@ -583,7 +597,7 @@
             window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
         }
 
-        loadCSV();
+        loadData();
     </script>
 </body>
 </html>
