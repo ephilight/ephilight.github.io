@@ -80,15 +80,15 @@
             width: 95vw;
             max-width: 1000px; 
             height: auto;
-            /* Remove strict max-height to allow full text fitting */
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, font-size 0.5s;
             transform-origin: center center; 
             
-            /* Text Texture Styling - Line height set to 0.9 for ultra-dense look */
+            /* Text Texture Styling */
             text-align: justify; 
             text-justify: inter-word;
             line-height: 0.1; 
             overflow: visible;
+            white-space: normal; /* Ensures text wraps and fills space */
         }
 
         /* --- SEGMENT STYLING --- */
@@ -97,19 +97,18 @@
             border-radius: 1px;
             cursor: default;
             display: inline;
+            white-space: normal;
         }
 
         /* Mode 1: Text Mode (The Dense Block) */
         .map-segment.mode-text {
             font-family: 'Georgia', 'Times New Roman', serif; 
-            /* Reduced font size slightly to guarantee fitting 1000+ sentences */
             font-size: 2.8px; 
             letter-spacing: -0.1px;
             color: #475569;
             background-color: transparent !important;
             margin: 0;
             padding: 0;
-            white-space: normal;
         }
 
         /* Mode 2: Bar Mode (Abstract Pattern) */
@@ -122,7 +121,6 @@
             margin: 1px;
             border-radius: 1px;
             mix-blend-mode: multiply;
-            white-space: nowrap;
         }
 
         /* Interactive State */
@@ -158,6 +156,7 @@
         .reader-sentence {
             display: inline; line-height: 2.2; padding: 2px 4px; border-radius: 2px;
             transition: all 0.2s; cursor: pointer; color: #64748b;
+            white-space: normal;
         }
         .reader-sentence.focused { color: #0f172a; font-weight: 600; background: #f1f5f9; box-shadow: 0 0 0 2px #cbd5e1; }
 
@@ -318,11 +317,25 @@
 
         const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
         
+        /**
+         * Cleans text to remove internal newlines and indents
+         * ensures it can be rendered as a single flat block.
+         */
+        function cleanText(text) {
+            if (!text) return "";
+            // Replace any sequence of whitespace (newlines, tabs, multiple spaces) with a single space
+            return text.replace(/\s+/g, ' ').trim();
+        }
+
         function loadCSV() {
             Papa.parse(encodeURI(csvFileName), {
                 download: true, header: true, skipEmptyLines: true,
                 complete: (results) => {
-                    diaryData = results.data;
+                    // Sanitize all text entries on load
+                    diaryData = results.data.map(row => ({
+                        ...row,
+                        Cleaned_Text: cleanText(row.Cleaned_Text)
+                    }));
                     initColors();
                     renderViews();
                     initScroller();
@@ -354,16 +367,19 @@
             readerContent.innerHTML = '';
             
             diaryData.forEach((row, i) => {
+                const text = row.Cleaned_Text;
+
+                // Create Map Segment
                 const segment = document.createElement('span');
                 segment.className = 'map-segment mode-text'; 
                 segment.dataset.index = i;
                 segment.dataset.category = row.Category || '';
                 segment.dataset.subcategory = row.Subcategory || '';
                 segment.dataset.nazi = row.Nazi || '';
-                segment.dataset.text = (row.Cleaned_Text || "").toLowerCase();
-                segment.innerText = row.Cleaned_Text + " "; 
+                segment.dataset.text = text.toLowerCase();
+                segment.innerText = text + " "; 
                 
-                const barWidth = Math.min(Math.max((row.Cleaned_Text || "").length / 3, 8), 100);
+                const barWidth = Math.min(Math.max(text.length / 3, 8), 100);
                 segment.dataset.barWidth = barWidth;
 
                 segment.onmouseenter = (e) => {
@@ -377,12 +393,13 @@
                 segment.onclick = (e) => { if (isExploreMode) zoomIn(e, i); };
                 docMap.appendChild(segment);
 
+                // Create Reader Sentence
                 const span = document.createElement('span');
                 span.className = 'reader-sentence';
                 span.id = `reader-s-${i}`;
                 span.dataset.nazi = row.Nazi || '';
-                span.dataset.text = (row.Cleaned_Text || "").toLowerCase();
-                span.innerText = row.Cleaned_Text + " ";
+                span.dataset.text = text.toLowerCase();
+                span.innerText = text + " ";
                 span.onclick = () => {
                     document.querySelectorAll('.reader-sentence').forEach(el => el.classList.remove('focused'));
                     span.classList.add('focused');
