@@ -129,10 +129,12 @@
 
                 for (let i = 1; i <= numPages; i++) {
                     const wrapper = document.createElement('div');
-                    wrapper.classList.add('page-wrapper', 'bg-zinc-900'); // Wrapper required for PageFlip styling in some modes
+                    // Add flex centering to wrapper so mixed aspect ratios (cover vs spreads) display correctly
+                    wrapper.classList.add('page-wrapper', 'bg-zinc-900', 'flex', 'items-center', 'justify-center');
                     
                     const canvas = document.createElement('canvas');
-                    canvas.classList.add('page-canvas', 'w-full', 'h-full', 'object-contain');
+                    // Use max dimensions to preserve aspect ratio within the wrapper
+                    canvas.classList.add('page-canvas', 'max-w-full', 'max-h-full', 'object-contain');
                     
                     wrapper.appendChild(canvas);
                     bookElement.appendChild(wrapper);
@@ -143,7 +145,8 @@
                 await Promise.all(renderPromises);
 
                 // 3. Initialize Flipbook
-                // We assume the PDF contains Spreads (Landscape), so we use 'single' mode to flip one wide sheet at a time.
+                // We use 'usePortrait: true' because PDF pages are already spreads (except cover).
+                // We want to view one PDF page at a time, flipping through them like a stack or album.
                 pageFlip = new St.PageFlip(bookElement, {
                     width: 800,  // Base dimensions - will scale responsive
                     height: 500,
@@ -153,10 +156,10 @@
                     minHeight: 200,
                     maxHeight: 1000,
                     maxShadowOpacity: 0.5,
-                    showCover: false, // Treat all pages equally
-                    mobileScrollSupport: false, // Disable native scroll on mobile to use touch for flip
-                    flippingTime: 800, // ms
-                    usePortrait: false, // Force landscape mode logic since pages are spreads
+                    showCover: true, // Handle first page as cover
+                    mobileScrollSupport: false, 
+                    flippingTime: 800, 
+                    usePortrait: true, // Forces single-page view (necessary since PDF pages are spreads)
                     startPage: 0
                 });
 
