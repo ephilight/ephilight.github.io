@@ -102,45 +102,50 @@
         // PDF.js Worker Setup
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        const pdfPath = 'Diary.pdf';
+        // Array of PDF parts to concatenate
+        const pdfPaths = ['diary1.pdf', 'diary2.pdf', 'diary3.pdf'];
+        
         const bookElement = document.getElementById('book');
         const container = document.getElementById('book-container');
         const loader = document.getElementById('loader');
         const pageCountEl = document.getElementById('page-count');
         
         let pageFlip;
-        let pdfDoc = null;
 
         // Configuration
         const scale = 1.5; // Render quality (higher = sharper)
 
         async function initBook() {
             try {
-                // 1. Load PDF
-                const loadingTask = pdfjsLib.getDocument(pdfPath);
-                pdfDoc = await loadingTask.promise;
-                
-                const numPages = pdfDoc.numPages;
-                pageCountEl.textContent = `PAGE 1 OF ${numPages}`;
-
-                // 2. Render all pages to canvases
-                // Note: For very large PDFs, lazy loading is better, but for a diary chapter (e.g. < 50 pages), rendering all works for smoothness.
+                let totalPages = 0;
                 const renderPromises = [];
 
-                for (let i = 1; i <= numPages; i++) {
-                    const wrapper = document.createElement('div');
-                    // Add flex centering to wrapper so mixed aspect ratios (cover vs spreads) display correctly
-                    wrapper.classList.add('page-wrapper', 'bg-zinc-900', 'flex', 'items-center', 'justify-center');
-                    
-                    const canvas = document.createElement('canvas');
-                    // Use max dimensions to preserve aspect ratio within the wrapper
-                    canvas.classList.add('page-canvas', 'max-w-full', 'max-h-full', 'object-contain');
-                    
-                    wrapper.appendChild(canvas);
-                    bookElement.appendChild(wrapper);
+                // Iterate through each PDF part
+                for (const path of pdfPaths) {
+                    const loadingTask = pdfjsLib.getDocument(path);
+                    const pdfDoc = await loadingTask.promise;
+                    const numPages = pdfDoc.numPages;
 
-                    renderPromises.push(renderPage(i, canvas));
+                    // Render pages for this specific PDF part
+                    for (let i = 1; i <= numPages; i++) {
+                        totalPages++; // Keep track of global page count
+
+                        const wrapper = document.createElement('div');
+                        // Add flex centering to wrapper so mixed aspect ratios (cover vs spreads) display correctly
+                        wrapper.classList.add('page-wrapper', 'bg-zinc-900', 'flex', 'items-center', 'justify-center');
+                        
+                        const canvas = document.createElement('canvas');
+                        // Use max dimensions to preserve aspect ratio within the wrapper
+                        canvas.classList.add('page-canvas', 'max-w-full', 'max-h-full', 'object-contain');
+                        
+                        wrapper.appendChild(canvas);
+                        bookElement.appendChild(wrapper);
+
+                        renderPromises.push(renderPage(pdfDoc, i, canvas));
+                    }
                 }
+
+                pageCountEl.textContent = `PAGE 1 OF ${totalPages}`;
 
                 await Promise.all(renderPromises);
 
@@ -173,7 +178,7 @@
                 // 5. Event Listeners
                 pageFlip.on('flip', (e) => {
                     // Update page count (index starts at 0, PDF pages at 1)
-                    pageCountEl.textContent = `PAGE ${e.data + 1} OF ${numPages}`;
+                    pageCountEl.textContent = `PAGE ${e.data + 1} OF ${totalPages}`;
                 });
 
                 document.getElementById('btn-prev').addEventListener('click', () => {
@@ -186,11 +191,11 @@
 
             } catch (error) {
                 console.error("Error loading flipbook:", error);
-                loader.innerHTML = `<p class="text-red-500 font-mono text-center">Error loading PDF.<br>Ensure 'Diary.pdf' is in the root folder.</p>`;
+                loader.innerHTML = `<p class="text-red-500 font-mono text-center">Error loading PDF parts.<br>Ensure 'diary1.pdf', 'diary2.pdf', 'diary3.pdf' are in the root folder.</p>`;
             }
         }
 
-        async function renderPage(num, canvas) {
+        async function renderPage(pdfDoc, num, canvas) {
             const page = await pdfDoc.getPage(num);
             const viewport = page.getViewport({ scale: scale });
             const context = canvas.getContext('2d');
