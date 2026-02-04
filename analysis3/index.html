@@ -284,7 +284,7 @@
                 </div>
             </section>
             
-            <div class="h-[20vh]"></div>
+            <div class="h-[70vh]"></div>
         </article>
     </main>
 
@@ -470,7 +470,6 @@
                     break;
                 case 'valuable-patterns': 
                 case 'explore': 
-                    // Reset to standard container mode with slightly larger zoom
                     applyVisualState(segments, { mode: 'bar', color: true, zoom: 1.2 });
                     break;
             }
@@ -560,7 +559,6 @@
 
         function zoomIn(event, index) {
             const rect = docMap.getBoundingClientRect();
-            // Calculate origin relative to current viewport for the zoom effect
             const originX = ((event.clientX - rect.left) / rect.width) * 100;
             const originY = ((event.clientY - rect.top) / rect.height) * 100;
             
@@ -581,7 +579,6 @@
         btnBack.onclick = () => {
             readerView.classList.remove('active');
             btnBack.classList.add('hidden');
-            // Return to the explore zoom level if in explore mode
             docMap.style.transform = isExploreMode ? 'scale(1.2)' : 'scale(1)';
             docMap.style.opacity = '1';
         };
@@ -597,7 +594,8 @@
         };
 
         function initScroller() {
-            scroller.setup({ step: '.step', offset: 0.5 }).onStepEnter(handleStepEnter);
+            // Updated offset to 0.15 so triggers happen higher up the page
+            scroller.setup({ step: '.step', offset: 0.15 }).onStepEnter(handleStepEnter);
             window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
         }
 
