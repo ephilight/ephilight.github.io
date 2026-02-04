@@ -39,7 +39,7 @@
             transition: all 0.5s ease;
         }
         
-        /* FIX: When exploring, move map ABOVE the scroll layer but BELOW the UI (300) */
+        /* FIX: When exploring, move map ABOVE the scroll layer but BELOW the UI (2500) */
         body.is-exploring .sticky-graphic {
             z-index: 100;
         }
@@ -192,7 +192,7 @@
 <body class="antialiased">
 
     <!-- HEADER CONTROLS -->
-    <div id="tool-header" class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
+    <div id="tool-header" class="fixed top-0 left-0 w-full z-[2500] p-6 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div class="flex items-center gap-4">
             <button id="btn-back" class="hidden bg-slate-900 text-white px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-lg flex items-center gap-2">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
@@ -470,7 +470,7 @@
                     break;
                 case 'valuable-patterns': 
                 case 'explore': 
-                    // Changed zoom to 1.2 for "a little larger" and kept standard container mode
+                    // Reset to standard container mode with slightly larger zoom
                     applyVisualState(segments, { mode: 'bar', color: true, zoom: 1.2 });
                     break;
             }
@@ -581,7 +581,8 @@
         btnBack.onclick = () => {
             readerView.classList.remove('active');
             btnBack.classList.add('hidden');
-            docMap.style.transform = 'scale(1)';
+            // Return to the explore zoom level if in explore mode
+            docMap.style.transform = isExploreMode ? 'scale(1.2)' : 'scale(1)';
             docMap.style.opacity = '1';
         };
 
