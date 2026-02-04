@@ -5,291 +5,237 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diary Highlighter Map</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/scrollama"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        :root { --map-gap: 2px; }
-        
-        body { 
-            background-color: #f8fafc; 
-            scroll-behavior: smooth; 
-            overflow-x: hidden; 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
-            color: #1e293b; 
+        :root {
+            --map-gap: 2px;
         }
 
-        /* --- SCROLLY LAYOUT --- */
-        #scrolly {
-            position: relative;
-            display: block;
+        body {
+            background-color: #fdfdfd;
+            overflow-x: hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #1e293b;
         }
 
-        .sticky-graphic {
+        /* Map View Styling - Narrower and Longer */
+        .document-map {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--map-gap);
+            padding: 60px;
+            background: #ffffff;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 40px -10px rgba(0,0,0,0.03);
+            align-content: flex-start;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+            max-width: 800px; 
+            margin: 0 auto;
+            transform-origin: center center;
+            border: 1px solid #f1f5f9;
+        }
+
+        .map-segment {
+            height: 12px;
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.1s, opacity 0.3s;
+            border-radius: 1px;
+            mix-blend-mode: multiply;
+        }
+
+        .map-segment:hover {
+            filter: contrast(1.1) brightness(0.95);
+            transform: scale(1.1);
+            z-index: 50;
+        }
+
+        /* Reader View Styling */
+        #reader-view {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100vh;
-            background-color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            z-index: 0;
-            transition: all 0.5s ease;
-        }
-
-        .scroll-text {
-            position: relative;
-            z-index: 20;
-            pointer-events: none;
-            padding-bottom: 50vh;
-        }
-        
-        .step {
-            margin: 0 auto;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .step-content {
-            pointer-events: auto;
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(12px);
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
-            border: 1px solid rgba(255,255,255,0.5);
-            transition: all 0.5s ease;
-            opacity: 0;
-            transform: translateY(20px);
-            max-width: 32rem;
-            text-align: center;
-        }
-
-        .step.is-active .step-content { opacity: 1; transform: translateY(0); }
-
-        /* --- MAP CONTAINER --- */
-        .document-map {
-            position: relative;
-            display: block; 
-            padding: 30px 40px;
             background: #ffffff;
-            width: 95vw;
-            max-width: 1000px; 
-            height: auto;
-            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, font-size 0.5s;
-            transform-origin: center center; 
-            
-            /* Text Texture Styling */
-            text-align: justify; 
-            text-justify: inter-word;
-            line-height: 0.1; 
-            overflow: visible;
-            white-space: normal; /* Ensures text wraps and fills space */
-        }
-
-        /* --- SEGMENT STYLING --- */
-        .map-segment {
-            transition: color 0.4s ease, background-color 0.4s ease, transform 0.3s ease, font-size 0.4s ease;
-            border-radius: 1px;
-            cursor: default;
-            display: inline;
-            white-space: normal;
-        }
-
-        /* Mode 1: Text Mode (The Dense Block) */
-        .map-segment.mode-text {
-            font-family: 'Georgia', 'Times New Roman', serif; 
-            font-size: 2.8px; 
-            letter-spacing: -0.1px;
-            color: #475569;
-            background-color: transparent !important;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Mode 2: Bar Mode (Abstract Pattern) */
-        .map-segment.mode-bar {
-            display: inline-block; 
-            vertical-align: middle;
-            font-size: 0px !important; 
-            color: transparent !important;
-            height: 8px;
-            margin: 1px;
-            border-radius: 1px;
-            mix-blend-mode: multiply;
-        }
-
-        /* Interactive State */
-        .map-segment.interactive { cursor: pointer; }
-        .map-segment.interactive:hover { transform: scale(1.4); z-index: 50; filter: contrast(1.2); position: relative; }
-
-        /* --- EXPLORE UI --- */
-        #tool-header, #legend-footer {
+            overflow-y: auto;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.8s ease;
+            transition: opacity 0.5s ease;
+            z-index: 200;
         }
-        
-        body.is-exploring #tool-header, 
-        body.is-exploring #legend-footer {
+
+        #reader-view.active {
             opacity: 1;
             pointer-events: auto;
         }
 
-        body.is-exploring .scroll-text {
-            opacity: 0;
+        .reader-sentence {
+            padding: 4px 0px;
+            margin: 0;
+            border-radius: 2px;
+            transition: background 0.4s, opacity 0.3s;
+            display: inline;
+            line-height: 2.8;
+            cursor: pointer;
+            white-space: normal;
+        }
+
+        /* The actual highlight look */
+        .highlighted-text {
+            padding: 4px 2px;
+            border-radius: 2px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            mix-blend-mode: multiply;
+        }
+
+        .reader-sentence.focused {
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1);
+            font-weight: 500;
+        }
+
+        /* Nazi Reference Highlighting */
+        .Nazi-highlight {
+            outline: 2px solid #ef4444 !important;
+            outline-offset: 1px;
+            z-index: 40;
+        }
+
+        /* Search & Filter Highlights */
+        .highlight-search {
+            outline: 2px solid #334155;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            opacity: 1 !important;
+            filter: contrast(1.2) brightness(0.9) !important;
+        }
+
+        .dimmed {
+            opacity: 0.05 !important;
+            filter: grayscale(100%);
             pointer-events: none;
         }
 
-        /* --- READER OVERLAY --- */
-        #reader-view {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 2000;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
-            overflow-y: auto;
+        .tooltip {
+            position: fixed;
+            background: #1e293b;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
-        #reader-view.active { opacity: 1; pointer-events: auto; }
 
-        .reader-sentence {
-            display: inline; line-height: 2.2; padding: 2px 4px; border-radius: 2px;
-            transition: all 0.2s; cursor: pointer; color: #64748b;
-            white-space: normal;
+        /* Legend Footer - Persistent across views */
+        #legend-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid #f1f5f9;
+            padding: 16px 24px;
+            z-index: 400;
+            display: none;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
         }
-        .reader-sentence.focused { color: #0f172a; font-weight: 600; background: #f1f5f9; box-shadow: 0 0 0 2px #cbd5e1; }
 
-        /* Utility */
-        .Nazi-highlight { outline: 2px solid #ef4444 !important; outline-offset: 1px; z-index: 40; }
-        .highlight-search { outline: 2px solid #334155; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); z-index: 100; opacity: 1 !important; }
-        .dimmed { opacity: 0.1 !important; filter: grayscale(100%); pointer-events: none; }
-        .tooltip { position: fixed; background: #1e293b; color: white; padding: 6px 10px; border-radius: 4px; font-size: 11px; pointer-events: none; z-index: 3000; display: none; }
-        
-        .legend-item.active { border-color: #334155 !important; background-color: #f8fafc !important; }
-
-        @media (max-width: 768px) {
-            .map-segment.mode-text { font-size: 1.8px; }
-            .step-content { margin: 0 1rem; padding: 1.5rem; }
+        .legend-item.active {
+            border-color: #334155 !important;
+            background-color: #f8fafc !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
+
+        /* Custom Scrollbar */
+        #reader-view::-webkit-scrollbar { width: 8px; }
+        #reader-view::-webkit-scrollbar-track { background: #ffffff; }
+        #reader-view::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- HEADER CONTROLS -->
-    <div id="tool-header" class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-100">
-        <div class="flex items-center gap-4">
-            <button id="btn-back" class="hidden bg-slate-900 text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all">
-                ← Back to Map
+    <!-- Sticky UI Header -->
+    <div class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center pointer-events-none">
+        <div class="pointer-events-auto flex items-center gap-4">
+            <button id="btn-back" class="hidden bg-slate-900 text-white px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-[0.15em] flex items-center gap-2 shadow-xl hover:bg-black transition-all">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                Zoom Out to Map
             </button>
-            <h1 class="text-[11px] font-bold text-slate-800 uppercase tracking-widest pl-2">Diary Archive Map</h1>
+            <div id="brand" class="bg-white/90 backdrop-blur px-5 py-2.5 rounded-xl border border-slate-100 shadow-sm">
+                <h1 class="text-[11px] font-bold text-slate-800 uppercase tracking-[0.2em]">Diary Document Map</h1>
+            </div>
         </div>
 
-        <div class="flex gap-3">
-            <div class="bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm flex items-center gap-2">
-                <input type="checkbox" id="Nazi-toggle" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900 cursor-pointer">
-                <label for="Nazi-toggle" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest cursor-pointer">Nazi Refs</label>
+        <div class="pointer-events-auto flex gap-3">
+            <!-- Nazi Toggle -->
+            <div class="bg-white/90 backdrop-blur px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                    <input type="checkbox" id="Nazi-toggle" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest whitespace-nowrap">show Nazi references</span>
+                </label>
             </div>
-            <input type="text" id="search-input" placeholder="SEARCH..." class="bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm text-[11px] font-bold uppercase tracking-widest w-32 focus:ring-2 focus:ring-slate-900 outline-none">
-            <select id="color-mode" class="bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm text-[10px] font-bold uppercase tracking-widest cursor-pointer outline-none">
-                <option value="Category">Category</option>
-                <option value="Subcategory">Sub-category</option>
-            </select>
+            <!-- Search -->
+            <div class="bg-white/90 backdrop-blur px-4 py-2.5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
+                <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Search</span>
+                <input type="text" id="search-input" placeholder="..." class="bg-transparent border-none focus:ring-0 text-sm font-medium w-32 md:w-48 text-slate-700">
+            </div>
+            <!-- Color Mode -->
+            <div class="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl border border-slate-100 shadow-sm flex items-center">
+                <select id="color-mode" class="bg-transparent border-none text-[10px] font-bold focus:ring-0 cursor-pointer text-slate-500 uppercase tracking-widest px-4">
+                    <option value="Category">Category</option>
+                    <option value="Subcategory">Sub-category</option>
+                </select>
+            </div>
         </div>
     </div>
 
-    <!-- MAIN VISUALIZATION -->
-    <div class="sticky-graphic">
-        <div id="viz-container">
-            <div id="document-map" class="document-map">
-                <div class="text-slate-300 animate-pulse text-center mt-20 font-mono text-sm uppercase tracking-widest">Compiling Archive...</div>
+    <!-- Main Map View -->
+    <main class="mt-28 px-6 pb-40 transition-all duration-700" id="main-content">
+        <!-- Initial Upload -->
+        <div id="upload-container" class="max-w-xl mx-auto mt-20 bg-white p-24 rounded-[2rem] shadow-2xl border border-slate-50 cursor-pointer hover:shadow-3xl transition-all">
+            <input type="file" id="csv-input" accept=".csv" class="hidden">
+            <div class="flex flex-col items-center">
+                <div class="w-20 h-20 bg-slate-900 text-white rounded-3xl flex items-center justify-center mb-8 rotate-3 shadow-xl">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Analyze Diary Corpus</h2>
+                <p class="text-slate-400 text-sm mt-3 font-medium">Drop your categorized CSV to map the document structure.</p>
             </div>
         </div>
-    </div>
 
-    <!-- SCROLLING NARRATIVE -->
-    <main id="scrolly">
-        <article class="scroll-text">
-            
-            <header class="h-[100vh] flex flex-col items-center justify-center pointer-events-none">
-                <span class="text-xs uppercase tracking-[0.4em] text-slate-400 mb-6 bg-white/50 px-4 py-1 rounded-full backdrop-blur">Diary Corpus Analysis</span>
-                <h1 class="text-6xl md:text-8xl font-light text-slate-900 tracking-tighter text-center">
-                    The Shape of<br><span class="font-serif italic text-slate-600">Memory</span>
-                </h1>
-                <div class="animate-bounce mt-12 text-slate-400">↓</div>
-            </header>
-
-            <section class="step" data-step="overview">
-                <div class="step-content">
-                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 1: The Whole Text</h3>
-                    <h2 class="text-3xl font-bold mb-4">Reading 1,080 sentences at once.</h2>
-                    <p class="text-slate-600 leading-relaxed text-lg">
-                        Behind this card is the entirety of the diary. Rendered in micro-script, we can perceive the total volume of the archive on a single page. Every word is present, flowing as one dense block of memory.
-                    </p>
-                </div>
-            </section>
-
-            <section class="step" data-step="meaningless">
-                <div class="step-content">
-                    <h2 class="text-3xl font-bold mb-4">Structure without Meaning</h2>
-                    <p class="text-slate-600 leading-relaxed text-lg">
-                        Without a lens to interpret this data, the archive remains an opaque, justified mass—a texture of life that is difficult to navigate by sight alone.
-                    </p>
-                </div>
-            </section>
-
-            <section class="step" data-step="zoom-label">
-                <div class="step-content">
-                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 2: Modeling</h3>
-                    <h2 class="text-3xl font-bold mb-4">Categorizing the Experience</h2>
-                    <p class="text-slate-600 leading-relaxed text-lg">
-                        By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The block is now illuminated by its content.
-                    </p>
-                </div>
-            </section>
-
-            <section class="step" data-step="valuable-patterns">
-                <div class="step-content">
-                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 3: Abstraction</h3>
-                    <h2 class="text-3xl font-bold mb-4">Patterns Emerge</h2>
-                    <p class="text-slate-600 leading-relaxed text-lg">
-                        We switch to an abstract view. The sentences become bars. Now, the "grey mass" reveals its rhythm. We see seasons of introspection (pink) versus periods of political turmoil (green).
-                    </p>
-                </div>
-            </section>
-
-            <section class="step" data-step="explore">
-                <div class="step-content">
-                    <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 4: Exploration</h3>
-                    <h2 class="text-3xl font-bold mb-4">The Archive is Yours</h2>
-                    <p class="text-slate-600 leading-relaxed text-lg">
-                        The narrative ends here. The tool is now yours. You can filter by category, search for keywords, or click any segment to enter the reader and see the history behind the data.
-                    </p>
-                </div>
-            </section>
-            
-            <div class="h-[20vh]"></div>
-        </article>
+        <!-- The Map Container -->
+        <div id="viz-container" class="hidden">
+            <div id="document-map" class="document-map"></div>
+        </div>
     </main>
 
-    <!-- FOOTER LEGEND -->
-    <footer id="legend-footer" class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur border-t border-slate-100 py-4 z-[300]">
-        <div class="max-w-6xl mx-auto flex flex-col items-center gap-2">
-            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Archive Legend</span>
-            <div id="legend-items" class="flex flex-wrap justify-center gap-2"></div>
+    <!-- Zoomed Reader View -->
+    <div id="reader-view">
+        <div class="max-w-4xl mx-auto pt-40 pb-96 px-16" id="reader-content">
+            <!-- Flowing sentences injected here -->
+        </div>
+    </div>
+
+    <!-- Persistent Legend Footer -->
+    <footer id="legend-footer">
+        <div class="max-w-6xl mx-auto flex flex-col items-center gap-3">
+            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Color Key & Filters</span>
+            <div id="legend-items" class="flex flex-wrap justify-center gap-3"></div>
         </div>
     </footer>
 
-    <!-- READER VIEW -->
-    <div id="reader-view">
-        <div class="max-w-3xl mx-auto pt-32 pb-40 px-8" id="reader-content"></div>
-    </div>
-
-    <!-- TOOLTIP -->
+    <!-- Tooltip -->
     <div id="tooltip" class="tooltip"></div>
 
     <script>
-        const scroller = scrollama();
+        const uploadContainer = document.getElementById('upload-container');
+        const csvInput = document.getElementById('csv-input');
+        const mainContent = document.getElementById('main-content');
         const docMap = document.getElementById('document-map');
         const readerView = document.getElementById('reader-view');
         const readerContent = document.getElementById('reader-content');
@@ -298,245 +244,212 @@
         const colorMode = document.getElementById('color-mode');
         const NaziToggle = document.getElementById('Nazi-toggle');
         const legendItems = document.getElementById('legend-items');
+        const legendFooter = document.getElementById('legend-footer');
         const tooltip = document.getElementById('tooltip');
-        
+
         let diaryData = [];
         let activeFilter = null;
-        let isExploreMode = false;
         
-        const palette = [
-            '#facc15', // Social
-            '#f472b6', // Reflection
-            '#a78bfa', // Temp/Spat
-            '#60a5fa', 
-            '#fb7185', // Romantic
-            '#4ade80', // Event/Political
-            '#2dd4bf', '#fb923c', '#a3e635', '#94a3b8'
+        const highlighterPalette = [
+            '#FFD93D', // 0: Golden Yellow (Social)
+            '#FF8AAE', // 1: Soft Rose (Reflection)
+            '#C8B6E2', // 2: Lavender Purple (Temp/Spat)
+            '#A0C4FF', // 3: Periwinkle Blue
+            '#FCA5A5', // 4: Soft Red (Romantic)
+            '#A5D6A7', // 5: Soft Sage (Event & Political)
+            '#95D1CC', // 6: Muted Teal
+            '#FFACAC', // 7: Warm Coral
+            '#B4E197', // 8: Fresh Green
+            '#D3D3D3'  // 9: Modern Neutral
         ];
+
         const colorMaps = { Category: {}, Subcategory: {} };
 
-        const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
-        
+        uploadContainer.onclick = () => csvInput.click();
+        csvInput.onchange = (e) => handleFile(e.target.files[0]);
+
         /**
          * Cleans text to remove internal newlines and indents
          * ensures it can be rendered as a single flat block.
          */
         function cleanText(text) {
             if (!text) return "";
-            // Replace any sequence of whitespace (newlines, tabs, multiple spaces) with a single space
             return text.replace(/\s+/g, ' ').trim();
         }
 
-        function loadCSV() {
-            Papa.parse(encodeURI(csvFileName), {
-                download: true, header: true, skipEmptyLines: true,
+        function handleFile(file) {
+            if (!file) return;
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
                 complete: (results) => {
-                    // Sanitize all text entries on load
+                    // Sanitize entries on load
                     diaryData = results.data.map(row => ({
                         ...row,
                         Cleaned_Text: cleanText(row.Cleaned_Text)
                     }));
                     initColors();
                     renderViews();
-                    initScroller();
+                    uploadContainer.classList.add('hidden');
+                    document.getElementById('viz-container').classList.remove('hidden');
+                    legendFooter.style.display = 'block';
                 }
             });
         }
 
         function initColors() {
             ['Category', 'Subcategory'].forEach(field => {
-                const vals = [...new Set(diaryData.map(r => r[field]).filter(Boolean))].sort();
-                const map = colorMaps[field];
+                const uniqueValues = [...new Set(diaryData.map(r => r[field]).filter(Boolean))].sort();
+                const assignedValues = new Set(['Event', 'Reflection', 'Temp/Spat', 'Social', 'Romantic', 'Political']);
                 
-                if (vals.includes('Social')) map['Social'] = palette[0];
-                if (vals.includes('Reflection')) map['Reflection'] = palette[1];
-                if (vals.includes('Temp/Spat')) map['Temp/Spat'] = field === 'Subcategory' ? 'transparent' : palette[2];
-                if (vals.includes('Romantic')) map['Romantic'] = palette[4];
-                if (vals.includes('Event')) map['Event'] = palette[5];
-                if (vals.includes('Political')) map['Political'] = palette[5];
+                if (uniqueValues.includes('Event')) colorMaps[field]['Event'] = highlighterPalette[5]; 
+                if (uniqueValues.includes('Political')) colorMaps[field]['Political'] = highlighterPalette[5]; 
+                if (uniqueValues.includes('Reflection')) colorMaps[field]['Reflection'] = highlighterPalette[1];
                 
-                let idx = 6;
-                vals.forEach(v => {
-                    if (!map[v]) map[v] = palette[idx++ % palette.length];
+                // Only assign color to Temp/Spat if we are NOT in Subcategory mode
+                if (uniqueValues.includes('Temp/Spat')) {
+                    if (field === 'Subcategory') {
+                        colorMaps[field]['Temp/Spat'] = 'transparent'; // Hidden/White
+                    } else {
+                        colorMaps[field]['Temp/Spat'] = highlighterPalette[2];
+                    }
+                }
+                
+                if (uniqueValues.includes('Social')) colorMaps[field]['Social'] = highlighterPalette[0];
+                if (uniqueValues.includes('Romantic')) colorMaps[field]['Romantic'] = highlighterPalette[4];
+                
+                let paletteIdx = 6; 
+                uniqueValues.forEach((val) => {
+                    if (assignedValues.has(val)) return;
+                    colorMaps[field][val] = highlighterPalette[paletteIdx % highlighterPalette.length];
+                    paletteIdx++;
                 });
             });
         }
 
         function renderViews() {
-            docMap.innerHTML = '';
-            readerContent.innerHTML = '';
-            
-            diaryData.forEach((row, i) => {
-                const text = row.Cleaned_Text;
+            renderMap();
+            renderReader();
+            updateColors();
+            applyFilterAndSearch();
+            applyNaziHighlights();
+        }
 
-                // Create Map Segment
-                const segment = document.createElement('span');
-                segment.className = 'map-segment mode-text'; 
+        function renderMap() {
+            docMap.innerHTML = '';
+            diaryData.forEach((row, i) => {
+                const segment = document.createElement('div');
+                segment.className = 'map-segment';
                 segment.dataset.index = i;
+                segment.dataset.text = (row.Cleaned_Text || "").toLowerCase();
                 segment.dataset.category = row.Category || '';
                 segment.dataset.subcategory = row.Subcategory || '';
-                segment.dataset.nazi = row.Nazi || '';
-                segment.dataset.text = text.toLowerCase();
-                segment.innerText = text + " "; 
+                segment.dataset.Nazi = row.Nazi || '';
                 
-                const barWidth = Math.min(Math.max(text.length / 3, 8), 100);
-                segment.dataset.barWidth = barWidth;
+                const textLen = (row.Cleaned_Text || "").length;
+                const width = Math.min(Math.max(textLen / 3.5, 10), 80);
+                segment.style.width = `${width}px`;
 
                 segment.onmouseenter = (e) => {
-                    if (!isExploreMode) return;
                     tooltip.style.display = 'block';
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY + 15) + 'px';
+                    tooltip.style.left = (e.clientX + 12) + 'px';
+                    tooltip.style.top = (e.clientY + 12) + 'px';
                     tooltip.innerText = row[colorMode.value] || 'Unlabeled';
                 };
                 segment.onmouseleave = () => tooltip.style.display = 'none';
-                segment.onclick = (e) => { if (isExploreMode) zoomIn(e, i); };
-                docMap.appendChild(segment);
 
-                // Create Reader Sentence
+                segment.onclick = (e) => zoomIn(e, i);
+                docMap.appendChild(segment);
+            });
+        }
+
+        function renderReader() {
+            readerContent.innerHTML = '';
+            diaryData.forEach((row, i) => {
                 const span = document.createElement('span');
                 span.className = 'reader-sentence';
                 span.id = `reader-s-${i}`;
-                span.dataset.nazi = row.Nazi || '';
-                span.dataset.text = text.toLowerCase();
-                span.innerText = text + " ";
+                span.dataset.text = (row.Cleaned_Text || "").toLowerCase();
+                span.dataset.category = row.Category || '';
+                span.dataset.subcategory = row.Subcategory || '';
+                span.dataset.Nazi = row.Nazi || '';
+                // The highlighted text includes the space for proper block flow
+                span.innerHTML = `<span class="highlighted-text" id="highlight-span-${i}">${row.Cleaned_Text} </span>`;
+                
                 span.onclick = () => {
                     document.querySelectorAll('.reader-sentence').forEach(el => el.classList.remove('focused'));
                     span.classList.add('focused');
                 };
+
                 readerContent.appendChild(span);
             });
-            updateColors();
-            renderLegend();
         }
 
-        function renderLegend() {
-            const field = colorMode.value;
-            legendItems.innerHTML = '';
-            Object.entries(colorMaps[field]).forEach(([name, color]) => {
-                if (field === 'Subcategory' && name === 'Temp/Spat') return;
-                const item = document.createElement('div');
-                item.className = `legend-item flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer select-none`;
-                item.innerHTML = `<div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div>${name}`;
-                item.onclick = () => {
-                    if (!isExploreMode) return;
-                    activeFilter = (activeFilter === name) ? null : name;
-                    document.querySelectorAll('.legend-item').forEach(l => l.classList.remove('active'));
-                    if (activeFilter) item.classList.add('active');
-                    applyFilterAndSearch();
-                };
-                legendItems.appendChild(item);
-            });
-        }
-
-        function handleStepEnter(response) {
-            const stepId = response.element.getAttribute('data-step');
-            response.element.classList.add('is-active');
+        function applyNaziHighlights() {
+            const isChecked = NaziToggle.checked;
             const segments = document.querySelectorAll('.map-segment');
+            const sentences = document.querySelectorAll('.reader-sentence');
 
-            if (stepId === 'explore') {
-                document.body.classList.add('is-exploring');
-                isExploreMode = true;
-            } else {
-                document.body.classList.remove('is-exploring');
-                isExploreMode = false;
-            }
-
-            switch(stepId) {
-                case 'overview': 
-                    applyVisualState(segments, { mode: 'text', color: false, zoom: 1 });
-                    break;
-                case 'meaningless': 
-                    applyVisualState(segments, { mode: 'text', color: false, zoom: 1.15 });
-                    break;
-                case 'zoom-label': 
-                    const targetIdx = diaryData.findIndex(d => d.Category === 'Reflection') || 100;
-                    applyVisualState(segments, { mode: 'text', color: true, zoom: 3.5, centerIdx: targetIdx });
-                    break;
-                case 'valuable-patterns': 
-                case 'explore': 
-                    applyVisualState(segments, { mode: 'bar', color: true, zoom: 1 });
-                    break;
-            }
-        }
-
-        function applyVisualState(segments, { mode, color, zoom, centerIdx }) {
-            const field = colorMode.value;
-            
-            segments.forEach((s, i) => {
-                if (mode === 'text') {
-                    s.classList.add('mode-text');
-                    s.classList.remove('mode-bar');
-                    s.style.width = 'auto'; 
-                    s.innerText = diaryData[i].Cleaned_Text + " "; 
+            [...segments, ...sentences].forEach(el => {
+                if (isChecked && el.dataset.Nazi === 'YES') {
+                    el.classList.add('Nazi-highlight');
                 } else {
-                    s.classList.add('mode-bar');
-                    s.classList.remove('mode-text');
-                    s.style.width = s.dataset.barWidth + 'px'; 
-                    s.innerText = ''; 
+                    el.classList.remove('Nazi-highlight');
                 }
-
-                if (color) {
-                    const c = colorMaps[field][diaryData[i][field]] || '#cbd5e1';
-                    if (mode === 'text') {
-                        s.style.color = c;
-                    } else {
-                        s.style.backgroundColor = c;
-                    }
-                } else {
-                    if (mode === 'text') {
-                        s.style.color = '#475569'; 
-                    } else {
-                        s.style.backgroundColor = '#e2e8f0'; 
-                    }
-                }
-                
-                if (isExploreMode) s.classList.add('interactive');
-                else s.classList.remove('interactive');
             });
-
-            if (centerIdx !== undefined) {
-                const target = segments[centerIdx];
-                const mapRect = docMap.getBoundingClientRect();
-                const tRect = target.getBoundingClientRect();
-                const ox = ((tRect.left + tRect.width/2 - mapRect.left) / mapRect.width) * 100;
-                const oy = ((tRect.top + tRect.height/2 - mapRect.top) / mapRect.height) * 100;
-                docMap.style.transformOrigin = `${ox}% ${oy}%`;
-                docMap.style.transform = `scale(${zoom})`;
-            } else {
-                docMap.style.transformOrigin = 'center center';
-                docMap.style.transform = `scale(${zoom})`;
-            }
         }
 
         function updateColors() {
             const field = colorMode.value;
-            if (isExploreMode) {
-                document.querySelectorAll('.map-segment').forEach((s, i) => {
-                    const c = colorMaps[field][diaryData[i][field]] || '#f1f5f9';
-                    if (s.classList.contains('mode-text')) {
-                        s.style.color = c;
-                    } else {
-                        s.style.backgroundColor = c;
-                    }
-                });
-                renderLegend();
-            }
+            const segments = document.querySelectorAll('.map-segment');
+            
+            segments.forEach((s, i) => {
+                const val = diaryData[i][field];
+                s.style.backgroundColor = colorMaps[field][val] || '#f1f5f9';
+            });
+
+            diaryData.forEach((row, i) => {
+                const val = row[field];
+                const color = colorMaps[field][val];
+                const hSpan = document.getElementById(`highlight-span-${i}`);
+                if (hSpan) hSpan.style.backgroundColor = color || 'transparent';
+            });
+
+            legendItems.innerHTML = '';
+            Object.entries(colorMaps[field]).forEach(([name, color]) => {
+                if (field === 'Subcategory' && name === 'Temp/Spat') return;
+
+                const item = document.createElement('div');
+                item.className = `legend-item flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer select-none ${activeFilter === name ? 'active' : ''}`;
+                item.innerHTML = `<div class="w-3 h-3 rounded-full" style="background:${color}"></div>${name}`;
+                
+                item.onclick = () => {
+                    activeFilter = (activeFilter === name) ? null : name;
+                    updateColors();
+                    applyFilterAndSearch();
+                };
+
+                legendItems.appendChild(item);
+            });
         }
 
         function applyFilterAndSearch() {
             const term = searchInput.value.toLowerCase().trim();
-            const field = colorMode.value.toLowerCase();
-            const all = document.querySelectorAll('.map-segment, .reader-sentence');
-            all.forEach(el => {
-                const itemVal = el.dataset[field];
-                const textVal = el.dataset.text;
-                const matchesFilter = !activeFilter || itemVal === activeFilter;
-                const matchesSearch = !term || textVal.includes(term);
+            const field = colorMode.value;
+            const attrKey = field.toLowerCase();
+            
+            const allElements = document.querySelectorAll('.map-segment, .reader-sentence');
+            
+            allElements.forEach(el => {
+                const matchesFilter = !activeFilter || el.dataset[attrKey] === activeFilter;
+                const matchesSearch = !term || el.dataset.text.includes(term);
+
                 if (matchesFilter) {
                     el.classList.remove('dimmed');
-                    if (term && matchesSearch) el.classList.add('highlight-search');
-                    else el.classList.remove('highlight-search');
+                    if (term && matchesSearch) {
+                        el.classList.add('highlight-search');
+                    } else {
+                        el.classList.remove('highlight-search');
+                    }
                 } else {
                     el.classList.add('dimmed');
                     el.classList.remove('highlight-search');
@@ -546,14 +459,17 @@
 
         function zoomIn(event, index) {
             const rect = docMap.getBoundingClientRect();
-            const ox = ((event.clientX - rect.left) / rect.width) * 100;
-            const oy = ((event.clientY - rect.top) / rect.height) * 100;
-            docMap.style.transformOrigin = `${ox}% ${oy}%`;
-            docMap.style.transform = 'scale(4)';
+            const originX = ((event.clientX - rect.left) / rect.width) * 100;
+            const originY = ((event.clientY - rect.top) / rect.height) * 100;
+            
+            docMap.style.transformOrigin = `${originX}% ${originY}%`;
+            docMap.style.transform = 'scale(4.5)';
             docMap.style.opacity = '0';
+            
             setTimeout(() => {
                 readerView.classList.add('active');
                 btnBack.classList.remove('hidden');
+                
                 const target = document.getElementById(`reader-s-${index}`);
                 document.querySelectorAll('.reader-sentence').forEach(el => el.classList.remove('focused'));
                 target.classList.add('focused');
@@ -568,22 +484,14 @@
             docMap.style.opacity = '1';
         };
 
-        colorMode.onchange = () => { activeFilter = null; updateColors(); if(isExploreMode) applyFilterAndSearch(); };
-        searchInput.oninput = applyFilterAndSearch;
-        NaziToggle.onchange = () => {
-            const isChecked = NaziToggle.checked;
-            document.querySelectorAll('.map-segment, .reader-sentence').forEach(el => {
-                if(isChecked && el.dataset.nazi === 'YES') el.classList.add('Nazi-highlight');
-                else el.classList.remove('Nazi-highlight');
-            });
+        colorMode.onchange = () => {
+            activeFilter = null;
+            updateColors();
+            applyFilterAndSearch();
         };
 
-        function initScroller() {
-            scroller.setup({ step: '.step', offset: 0.5 }).onStepEnter(handleStepEnter);
-            window.addEventListener('resize', () => window.requestAnimationFrame(() => scroller.resize()));
-        }
-
-        loadCSV();
+        searchInput.oninput = applyFilterAndSearch;
+        NaziToggle.onchange = applyNaziHighlights;
     </script>
 </body>
 </html>
