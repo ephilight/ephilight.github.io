@@ -36,7 +36,6 @@
         }
         .page-canvas {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            /* Initial state for canvas */
             max-width: 100%;
             max-height: 100%;
         }
@@ -69,16 +68,14 @@
     <!-- Main Flipbook Area -->
     <main class="flex-grow flex flex-col justify-center items-center relative pt-20">
         
-        <!-- Loading Indicator -->
         <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-0">
             <div class="w-12 h-12 border-t-2 border-zinc-700 rounded-full animate-spin"></div>
             <p class="text-xs uppercase tracking-widest text-zinc-600 animate-pulse">Initializing Artifact...</p>
         </div>
 
-        <!-- Book Container -->
         <div id="book-container">
             <div id="book" class="relative">
-                <!-- Pages will be injected here by JS -->
+                <!-- Pages injected here -->
             </div>
         </div>
 
@@ -105,88 +102,63 @@
         const pageCountEl = document.getElementById('page-count');
         
         let pageFlip;
-        
-        // This registry will map a linear Book Page Index (0, 1, 2...)
-        // to the specific PDF Document object and the specific Page Number within that PDF.
         const pagesRegistry = []; 
         
-        // Configuration
-        const scale = 1.5; // Render quality
-        const RENDER_WINDOW = 3; // Render current page +/- 3 pages. Keep this low to save memory.
+        const scale = 1.8; // High res for zoomed viewing
+        const RENDER_WINDOW = 4; // Buffer for smooth turning
 
         async function initBook() {
             try {
-                // 1. Pre-load PDF Structures (Metadata only, not images)
-                let globalPageIndex = 0;
+                let globalBookIndex = 0;
 
-                for (const path of pdfPaths) {
-                    const loadingTask = pdfjsLib.getDocument(path);
+                for (let fileIdx = 0; fileIdx < pdfPaths.length; fileIdx++) {
+                    const loadingTask = pdfjsLib.getDocument(pdfPaths[fileIdx]);
                     const pdfDoc = await loadingTask.promise;
                     const numPages = pdfDoc.numPages;
 
                     for (let i = 1; i <= numPages; i++) {
-                        // Store the mapping for lazy loading later
-                        pagesRegistry.push({
-                            globalIndex: globalPageIndex,
-                            pdfDoc: pdfDoc,
-                            pdfPageNumber: i,
-                            isRendered: false,
-                            canvas: null
-                        });
-
-                        // Create DOM Placeholder (Empty)
-                        const wrapper = document.createElement('div');
-                        wrapper.classList.add('page-wrapper');
-                        wrapper.dataset.density = 'soft'; // Simple paper effect
-                        
-                        const canvas = document.createElement('canvas');
-                        canvas.classList.add('page-canvas');
-                        // Assign ID to find it later
-                        canvas.id = `canvas-${globalPageIndex}`;
-                        
-                        wrapper.appendChild(canvas);
-                        bookElement.appendChild(wrapper);
-
-                        globalPageIndex++;
+                        // First page of First PDF is the single cover
+                        if (fileIdx === 0 && i === 1) {
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'full');
+                        } else {
+                            // Split pages into Left and Right halves
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'left');
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'right');
+                        }
                     }
                 }
 
                 pageCountEl.textContent = `PAGE 1 OF ${pagesRegistry.length}`;
 
-                // 2. Initialize Flipbook
+                // Setup PageFlip for single-page portrait view (one flippable page in center)
                 pageFlip = new St.PageFlip(bookElement, {
-                    width: 800, 
-                    height: 500,
+                    width: 500, // Ratio of a single diary page
+                    height: 750,
                     size: 'stretch',
                     minWidth: 300,
-                    maxWidth: 1600,
-                    minHeight: 200,
-                    maxHeight: 1000,
+                    maxWidth: 1000,
+                    minHeight: 450,
+                    maxHeight: 1500,
                     maxShadowOpacity: 0.5,
                     showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
-                    usePortrait: true, // Handle spreads as single "pages"
+                    usePortrait: true, // Center single pages
                     startPage: 0
                 });
 
                 pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
 
-                // 3. Initial Render (First few pages only)
                 await updateVisiblePages(0);
 
-                // 4. Reveal UI
                 loader.style.opacity = '0';
                 setTimeout(() => loader.remove(), 500);
                 container.classList.add('ready');
 
-                // 5. Event Listeners for Lazy Loading
                 pageFlip.on('flip', (e) => {
-                    const currentPageIndex = e.data; // The new current page index
-                    pageCountEl.textContent = `PAGE ${currentPageIndex + 1} OF ${pagesRegistry.length}`;
-                    
-                    // Trigger Smart Rendering
-                    updateVisiblePages(currentPageIndex);
+                    const idx = e.data;
+                    pageCountEl.textContent = `PAGE ${idx + 1} OF ${pagesRegistry.length}`;
+                    updateVisiblePages(idx);
                 });
 
                 document.getElementById('btn-prev').addEventListener('click', () => pageFlip.flipPrev());
@@ -194,44 +166,58 @@
 
             } catch (error) {
                 console.error("Error loading flipbook:", error);
-                loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Memory limit exceeded or missing files.<br>Ensure Diary1.pdf, Diary2.pdf, Diary3.pdf are present.</p>`;
+                loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Check console for details.</p>`;
             }
         }
 
-        // Core Logic: Render only what is needed, clear what is not
-        async function updateVisiblePages(currentIndex) {
-            const renderQueue = [];
+        function addPageToRegistry(index, pdfDoc, pdfPageNum, type) {
+            pagesRegistry.push({
+                pdfDoc: pdfDoc,
+                pdfPageNumber: pdfPageNum,
+                type: type, // 'full', 'left', or 'right'
+                isRendered: false
+            });
+
+            const wrapper = document.createElement('div');
+            wrapper.classList.add('page-wrapper');
             
-            // Calculate window
+            const canvas = document.createElement('canvas');
+            canvas.classList.add('page-canvas');
+            canvas.id = `canvas-${index}`;
+            
+            wrapper.appendChild(canvas);
+            bookElement.appendChild(wrapper);
+        }
+
+        async function updateVisiblePages(currentIndex) {
             const start = Math.max(0, currentIndex - RENDER_WINDOW);
             const end = Math.min(pagesRegistry.length - 1, currentIndex + RENDER_WINDOW);
 
-            // 1. CLEAR pages outside the window (Free Memory)
             for (let i = 0; i < pagesRegistry.length; i++) {
                 if (i < start || i > end) {
-                    if (pagesRegistry[i].isRendered) {
-                        const canvas = document.getElementById(`canvas-${i}`);
-                        if (canvas) {
-                            // Clear canvas context to free GPU memory
-                            const ctx = canvas.getContext('2d');
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            canvas.width = 0; // Effectively zeroes out the memory buffer
-                            canvas.height = 0;
-                            pagesRegistry[i].isRendered = false;
-                        }
-                    }
+                    clearCanvas(i);
+                } else if (!pagesRegistry[i].isRendered) {
+                    renderPageAtIndex(i);
                 }
             }
-
-            // 2. RENDER pages inside the window
-            for (let i = start; i <= end; i++) {
-                if (!pagesRegistry[i].isRendered) {
-                    renderQueue.push(renderPageAtIndex(i));
-                }
-            }
-
-            await Promise.all(renderQueue);
         }
+
+        function clearCanvas(index) {
+            if (pagesRegistry[index].isRendered) {
+                const canvas = document.getElementById(`canvas-${index}`);
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    canvas.width = 0;
+                    canvas.height = 0;
+                    pagesRegistry[index].isRendered = false;
+                }
+            }
+        }
+
+        // Dedicated offscreen canvas for initial spread rendering
+        const scratchCanvas = document.createElement('canvas');
+        const scratchCtx = scratchCanvas.getContext('2d');
 
         async function renderPageAtIndex(index) {
             const entry = pagesRegistry[index];
@@ -241,25 +227,38 @@
             try {
                 const page = await entry.pdfDoc.getPage(entry.pdfPageNumber);
                 const viewport = page.getViewport({ scale: scale });
-                const context = canvas.getContext('2d');
-
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                const renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
                 
-                await page.render(renderContext).promise;
+                // 1. Render the full spread to the offscreen scratch canvas
+                scratchCanvas.width = viewport.width;
+                scratchCanvas.height = viewport.height;
+                await page.render({ canvasContext: scratchCtx, viewport: viewport }).promise;
+
+                // 2. Extract the specific half and draw to the visible canvas
+                const targetCtx = canvas.getContext('2d');
+
+                if (entry.type === 'full') {
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    targetCtx.drawImage(scratchCanvas, 0, 0);
+                } else if (entry.type === 'left') {
+                    canvas.width = viewport.width / 2;
+                    canvas.height = viewport.height;
+                    // Draw the left half
+                    targetCtx.drawImage(scratchCanvas, 0, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
+                } else if (entry.type === 'right') {
+                    canvas.width = viewport.width / 2;
+                    canvas.height = viewport.height;
+                    // Draw the right half
+                    targetCtx.drawImage(scratchCanvas, viewport.width / 2, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
+                }
+                
                 entry.isRendered = true;
             } catch (err) {
-                console.error(`Failed to render page ${index}`, err);
+                console.error(`Failed to render book page ${index}`, err);
             }
         }
 
         window.addEventListener('DOMContentLoaded', initBook);
-
     </script>
 </body>
 </html>
