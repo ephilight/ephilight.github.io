@@ -5,49 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ruth Mueller's Diary, Non-linear</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             scroll-behavior: smooth;
         }
         .interactive-word {
             cursor: pointer;
-            transition: color 0.2s ease-in-out, background-color 0.2s ease-in-out;
-            border-radius: 3px;
-            padding: 1px 2px;
-            margin: -1px -2px;
+            transition: all 0.2s ease-in-out;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.9);
             white-space: pre;
+            padding: 0 1px;
         }
         .interactive-word:hover {
-            background-color: #fce7f3; /* light pink */
-            color: #37a769; /* deep pink */
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border-bottom-color: #ffffff;
         }
         .highlight {
-            transition: background-color 0.5s ease;
-            background-color: #a7f3d0; /* light mint */
-            color: #064e3b; /* dark teal */
+            transition: background-color 0.8s ease;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border-bottom: 1px solid #ffffff;
         }
         .hidden {
             display: none;
         }
         .diary-entry p {
-            line-height: 1.7;
-            text-align: justify;
-            text-indent: 1.5em; 
+            line-height: 1.8;
+            font-weight: 300;
+            font-size: 1.125rem;
+        }
+        .diary-entry p::first-letter {
+            font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+            font-style: italic;
+            font-size: 1.5em;
+            margin-right: 2px;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="antialiased selection:bg-zinc-800">
 
-    <div class="container mx-auto max-w-3xl p-6 md:p-12">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-black-500">Ruth Mueller's Diary, Non-linear</h1>
-            <p class="text-lg text-gray-500 mt-2">Click on a word; jump to a different entry</p>
+    <div class="container mx-auto max-w-3xl px-6 py-20 md:py-32">
+        <header class="mb-20">
+            <span class="text-[10px] uppercase tracking-[0.5em] text-zinc-500 mb-6 block">Non-linear Interface</span>
+            <h1 class="text-4xl md:text-6xl font-light tracking-tighter leading-none mb-4">
+                Ruth Mueller's Diary, <span class="italic font-serif">Non-linear</span>
+            </h1>
+            <p class="text-zinc-500 font-light tracking-wide text-sm uppercase">Click on a word; jump to a different entry.</p>
         </header>
 
-        <div id="story-container" class="text-lg md:text-xl leading-relaxed space-y-8 bg-white p-8 rounded-xl shadow-2xl min-h-[30rem] flex flex-col justify-center border-t-4 border-green-500">
-            <!-- Diary Entries Start Here -->
+        <div id="story-container" class="min-h-[40vh] flex flex-col justify-center border-l border-zinc-900 pl-8 md:pl-12">
+            <!-- Diary Entries -->
             <div class="diary-entry">
                 <p>Heute, den 6. Dez. 1932 hatten wir Nikolaustag. Es war sehr nett. Besonders vorher, denn ich war zuerst bei Schwarzes und mir die schwarze Samthose von Metha abgeholt. Franz war da und hat mir Torte & Schoko gegeben. Er sagte, ich müsse unbedingt abnehmen. Einige ubrigen gibte er mir. Ich musste mich auf den Boden legen & bekam einen Sandsack auf den Bauch zum Turnen. Ich wartete auf ihn beim Weggehen, da er ein Stuck mit mir gehen wollte. Ich verabschiedete mich von Metha & fuhr mit Franz im Aufzug hinunter. Im Aufzug, ich weiss gar nicht mehr wie das ging, da hatte ich einen Kuss von ihm. Da ich doch so in ihn verknallt bin, legte ich meine Hand auf seine Schultern. Er legte seine Nase auf meine Backe, doch da wachte ich erst auf & wusste was ich mache. Sofort ließ ich meine Hand herunter & machte mich ab. Schön war das machen nun ist es zu ende, den wir waren im Parterre! Wir taten, als ob nichts gewesen wäre & er ging mit mir bis an die Otto Beckstr., denn ich ging zur Vera Meier mein erster Kuss von jemand in den ich verknallt bin, der aber leider verheiratet ist & eine süße Frau hat. Du warst mein schönstes (bis jetzt) Erlebnis!!! Mausi!!</p>
             </div>
@@ -501,13 +513,16 @@
             </div>
         </div>
 
-        <footer class="text-center mt-10">
-            <p class="text-gray-500">A non-linear Diary Experiment Based on Ruth Mueller's Diary. USHMM, 2017.651.1.</p>
+        <footer class="mt-32 pt-12 border-t border-zinc-900 text-zinc-600 text-[10px] uppercase tracking-widest flex flex-col md:flex-row justify-between items-center gap-4">
+            <span>A non-linear Diary Experiment Based on Ruth Mueller's Diary. USHMM, 2017.651.1.</span>
+            <div class="flex gap-8">
+                <a href="index.html" class="hover:text-white transition-colors">Back to Overview</a>
+            </div>
         </footer>
     </div>
 
-    <div id="notification" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-pink-700 text-white px-5 py-3 rounded-full shadow-lg transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
-        Versuche ein anderes Wort
+    <div id="notification" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-zinc-900 border border-zinc-800 text-zinc-400 text-[10px] uppercase tracking-widest px-6 py-3 rounded-full shadow-2xl transition-opacity duration-500 opacity-0 pointer-events-none">
+        No further connections found
     </div>
 
     <script>
@@ -518,7 +533,7 @@
             const allEntries = storyContainer.querySelectorAll('.diary-entry');
             let notificationTimeout = null;
 
-            // German Lemma Dictionary for irregular verbs found in text
+            // Lemma-mapping for German verbs and themes
             const lemmaMap = {
                 "war": "sein", "ist": "sein", "bin": "sein", "sind": "sein", "wäre": "sein", "gewesen": "sein",
                 "hatte": "haben", "hat": "haben", "habe": "haben", "hätte": "haben", "gehabt": "haben", "hatten": "haben",
