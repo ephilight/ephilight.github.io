@@ -80,7 +80,7 @@
             width: 95vw;
             max-width: 1000px; 
             height: auto;
-            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, font-size 0.5s;
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s, font-size 0.5s, width 0.8s, height 0.8s, max-width 0.8s, padding 0.8s;
             transform-origin: center center; 
             
             /* Text Texture Styling */
@@ -88,12 +88,25 @@
             text-justify: inter-word;
             line-height: 0.1; 
             overflow: visible;
-            white-space: normal; /* Ensures text wraps and fills space */
+            white-space: normal; 
+        }
+
+        /* Expansion for Explore Mode */
+        .document-map.full-screen {
+            width: 100vw;
+            height: 100vh;
+            max-width: none;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 1px;
+            overflow-y: auto;
         }
 
         /* --- SEGMENT STYLING --- */
         .map-segment {
-            transition: color 0.4s ease, background-color 0.4s ease, transform 0.3s ease, font-size 0.4s ease;
+            transition: color 0.4s ease, background-color 0.4s ease, transform 0.3s ease, font-size 0.4s ease, width 0.4s;
             border-radius: 1px;
             cursor: default;
             display: inline;
@@ -117,10 +130,12 @@
             vertical-align: middle;
             font-size: 0px !important; 
             color: transparent !important;
-            height: 8px;
+            height: 12px;
             margin: 1px;
             border-radius: 1px;
             mix-blend-mode: multiply;
+            flex-grow: 0;
+            flex-shrink: 0;
         }
 
         /* Interactive State */
@@ -147,18 +162,26 @@
 
         /* --- READER OVERLAY --- */
         #reader-view {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 2000;
-            opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+            position: fixed; inset: 0; background: rgba(255,255,255,0.99); z-index: 2000;
+            opacity: 0; pointer-events: none; transition: opacity 0.5s ease;
             overflow-y: auto;
         }
         #reader-view.active { opacity: 1; pointer-events: auto; }
 
         .reader-sentence {
-            display: inline; line-height: 2.2; padding: 2px 4px; border-radius: 2px;
+            display: inline; line-height: 2.8; padding: 4px 0px; border-radius: 2px;
             transition: all 0.2s; cursor: pointer; color: #64748b;
             white-space: normal;
         }
-        .reader-sentence.focused { color: #0f172a; font-weight: 600; background: #f1f5f9; box-shadow: 0 0 0 2px #cbd5e1; }
+        .reader-sentence.focused { box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1); font-weight: 500; color: #0f172a; }
+
+        .highlighted-text {
+            padding: 4px 2px;
+            border-radius: 2px;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            mix-blend-mode: multiply;
+        }
 
         /* Utility */
         .Nazi-highlight { outline: 2px solid #ef4444 !important; outline-offset: 1px; z-index: 40; }
@@ -177,12 +200,13 @@
 <body class="antialiased">
 
     <!-- HEADER CONTROLS -->
-    <div id="tool-header" class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-slate-100">
+    <div id="tool-header" class="fixed top-0 left-0 w-full z-[300] p-6 flex justify-between items-center bg-white/90 backdrop-blur-md border-b border-slate-100">
         <div class="flex items-center gap-4">
-            <button id="btn-back" class="hidden bg-slate-900 text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all">
-                ← Back to Map
+            <button id="btn-back" class="hidden bg-slate-900 text-white px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black transition-all shadow-lg flex items-center gap-2">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                Zoom Out to Map
             </button>
-            <h1 class="text-[11px] font-bold text-slate-800 uppercase tracking-widest pl-2">Diary Archive Map</h1>
+            <h1 class="text-[11px] font-bold text-slate-800 uppercase tracking-widest pl-2">Diary Document Map</h1>
         </div>
 
         <div class="flex gap-3">
@@ -243,7 +267,7 @@
                     <h3 class="text-xs uppercase tracking-widest text-slate-400 mb-2">Step 2: Modeling</h3>
                     <h2 class="text-3xl font-bold mb-4">Categorizing the Experience</h2>
                     <p class="text-slate-600 leading-relaxed text-lg">
-                        By assigning a semantic label to each sentence—<span class="text-yellow-500 font-bold">Social</span>, <span class="text-green-500 font-bold">Event</span>, <span class="text-pink-500 font-bold">Reflection</span>—we transform text into data. The block is now illuminated by its content.
+                        By assigning a semantic label to each sentence—<span class="text-[#FFD93D] font-bold">Social</span>, <span class="text-[#A5D6A7] font-bold">Event</span>, <span class="text-[#FF8AAE] font-bold">Reflection</span>—we transform text into data. The block is now illuminated by its content.
                     </p>
                 </div>
             </section>
@@ -282,7 +306,7 @@
 
     <!-- READER VIEW -->
     <div id="reader-view">
-        <div class="max-w-3xl mx-auto pt-32 pb-40 px-8" id="reader-content"></div>
+        <div class="max-w-4xl mx-auto pt-40 pb-96 px-12" id="reader-content"></div>
     </div>
 
     <!-- TOOLTIP -->
@@ -305,25 +329,23 @@
         let isExploreMode = false;
         
         const palette = [
-            '#facc15', // Social
-            '#f472b6', // Reflection
-            '#a78bfa', // Temp/Spat
-            '#60a5fa', 
-            '#fb7185', // Romantic
-            '#4ade80', // Event/Political
-            '#2dd4bf', '#fb923c', '#a3e635', '#94a3b8'
+            '#FFD93D', // 0: Golden Yellow (Social)
+            '#FF8AAE', // 1: Soft Rose (Reflection)
+            '#C8B6E2', // 2: Lavender Purple (Temp/Spat)
+            '#A0C4FF', // 3: Periwinkle Blue
+            '#FCA5A5', // 4: Soft Red (Romantic)
+            '#A5D6A7', // 5: Soft Sage (Event & Political)
+            '#95D1CC', // 6: Muted Teal
+            '#FFACAC', // 7: Warm Coral
+            '#B4E197', // 8: Fresh Green
+            '#D3D3D3'  // 9: Modern Neutral
         ];
         const colorMaps = { Category: {}, Subcategory: {} };
 
         const csvFileName = 'Cleaned Diary Sentences - Categorized_ (8).csv';
         
-        /**
-         * Cleans text to remove internal newlines and indents
-         * ensures it can be rendered as a single flat block.
-         */
         function cleanText(text) {
             if (!text) return "";
-            // Replace any sequence of whitespace (newlines, tabs, multiple spaces) with a single space
             return text.replace(/\s+/g, ' ').trim();
         }
 
@@ -331,7 +353,6 @@
             Papa.parse(encodeURI(csvFileName), {
                 download: true, header: true, skipEmptyLines: true,
                 complete: (results) => {
-                    // Sanitize all text entries on load
                     diaryData = results.data.map(row => ({
                         ...row,
                         Cleaned_Text: cleanText(row.Cleaned_Text)
@@ -347,7 +368,8 @@
             ['Category', 'Subcategory'].forEach(field => {
                 const vals = [...new Set(diaryData.map(r => r[field]).filter(Boolean))].sort();
                 const map = colorMaps[field];
-                
+                const assigned = new Set(['Social', 'Reflection', 'Temp/Spat', 'Romantic', 'Event', 'Political']);
+
                 if (vals.includes('Social')) map['Social'] = palette[0];
                 if (vals.includes('Reflection')) map['Reflection'] = palette[1];
                 if (vals.includes('Temp/Spat')) map['Temp/Spat'] = field === 'Subcategory' ? 'transparent' : palette[2];
@@ -357,7 +379,7 @@
                 
                 let idx = 6;
                 vals.forEach(v => {
-                    if (!map[v]) map[v] = palette[idx++ % palette.length];
+                    if (!map[v] && !assigned.has(v)) map[v] = palette[idx++ % palette.length];
                 });
             });
         }
@@ -379,7 +401,7 @@
                 segment.dataset.text = text.toLowerCase();
                 segment.innerText = text + " "; 
                 
-                const barWidth = Math.min(Math.max(text.length / 3, 8), 100);
+                const barWidth = Math.min(Math.max(text.length / 3, 10), 80);
                 segment.dataset.barWidth = barWidth;
 
                 segment.onmouseenter = (e) => {
@@ -398,8 +420,10 @@
                 span.className = 'reader-sentence';
                 span.id = `reader-s-${i}`;
                 span.dataset.nazi = row.Nazi || '';
+                span.dataset.category = row.Category || '';
+                span.dataset.subcategory = row.Subcategory || '';
                 span.dataset.text = text.toLowerCase();
-                span.innerText = text + " ";
+                span.innerHTML = `<span class="highlighted-text" id="highlight-span-${i}">${text} </span>`;
                 span.onclick = () => {
                     document.querySelectorAll('.reader-sentence').forEach(el => el.classList.remove('focused'));
                     span.classList.add('focused');
@@ -416,14 +440,13 @@
             Object.entries(colorMaps[field]).forEach(([name, color]) => {
                 if (field === 'Subcategory' && name === 'Temp/Spat') return;
                 const item = document.createElement('div');
-                item.className = `legend-item flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer select-none`;
+                item.className = `legend-item flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm transition-all hover:bg-slate-50 cursor-pointer select-none ${activeFilter === name ? 'active' : ''}`;
                 item.innerHTML = `<div class="w-2.5 h-2.5 rounded-full" style="background:${color}"></div>${name}`;
                 item.onclick = () => {
                     if (!isExploreMode) return;
                     activeFilter = (activeFilter === name) ? null : name;
-                    document.querySelectorAll('.legend-item').forEach(l => l.classList.remove('active'));
-                    if (activeFilter) item.classList.add('active');
                     applyFilterAndSearch();
+                    renderLegend();
                 };
                 legendItems.appendChild(item);
             });
@@ -436,9 +459,11 @@
 
             if (stepId === 'explore') {
                 document.body.classList.add('is-exploring');
+                docMap.classList.add('full-screen');
                 isExploreMode = true;
             } else {
                 document.body.classList.remove('is-exploring');
+                docMap.classList.remove('full-screen');
                 isExploreMode = false;
             }
 
@@ -478,17 +503,11 @@
 
                 if (color) {
                     const c = colorMaps[field][diaryData[i][field]] || '#cbd5e1';
-                    if (mode === 'text') {
-                        s.style.color = c;
-                    } else {
-                        s.style.backgroundColor = c;
-                    }
+                    if (mode === 'text') s.style.color = c;
+                    else s.style.backgroundColor = c;
                 } else {
-                    if (mode === 'text') {
-                        s.style.color = '#475569'; 
-                    } else {
-                        s.style.backgroundColor = '#e2e8f0'; 
-                    }
+                    if (mode === 'text') s.style.color = '#475569'; 
+                    else s.style.backgroundColor = '#e2e8f0'; 
                 }
                 
                 if (isExploreMode) s.classList.add('interactive');
@@ -511,28 +530,32 @@
 
         function updateColors() {
             const field = colorMode.value;
-            if (isExploreMode) {
-                document.querySelectorAll('.map-segment').forEach((s, i) => {
-                    const c = colorMaps[field][diaryData[i][field]] || '#f1f5f9';
-                    if (s.classList.contains('mode-text')) {
-                        s.style.color = c;
-                    } else {
-                        s.style.backgroundColor = c;
-                    }
-                });
-                renderLegend();
-            }
+            // Update Map
+            document.querySelectorAll('.map-segment').forEach((s, i) => {
+                const c = colorMaps[field][diaryData[i][field]] || '#f1f5f9';
+                if (s.classList.contains('mode-text')) s.style.color = c;
+                else s.style.backgroundColor = c;
+            });
+            // Update Reader
+            diaryData.forEach((row, i) => {
+                const c = colorMaps[field][row[field]];
+                const hSpan = document.getElementById(`highlight-span-${i}`);
+                if (hSpan) hSpan.style.backgroundColor = c || 'transparent';
+            });
+            renderLegend();
         }
 
         function applyFilterAndSearch() {
             const term = searchInput.value.toLowerCase().trim();
             const field = colorMode.value.toLowerCase();
-            const all = document.querySelectorAll('.map-segment, .reader-sentence');
-            all.forEach(el => {
+            const allElements = document.querySelectorAll('.map-segment, .reader-sentence');
+            
+            allElements.forEach(el => {
                 const itemVal = el.dataset[field];
                 const textVal = el.dataset.text;
                 const matchesFilter = !activeFilter || itemVal === activeFilter;
                 const matchesSearch = !term || textVal.includes(term);
+
                 if (matchesFilter) {
                     el.classList.remove('dimmed');
                     if (term && matchesSearch) el.classList.add('highlight-search');
@@ -546,11 +569,14 @@
 
         function zoomIn(event, index) {
             const rect = docMap.getBoundingClientRect();
-            const ox = ((event.clientX - rect.left) / rect.width) * 100;
-            const oy = ((event.clientY - rect.top) / rect.height) * 100;
-            docMap.style.transformOrigin = `${ox}% ${oy}%`;
-            docMap.style.transform = 'scale(4)';
+            // Calculate origin relative to current viewport for the zoom effect
+            const originX = ((event.clientX - rect.left) / rect.width) * 100;
+            const originY = ((event.clientY - rect.top) / rect.height) * 100;
+            
+            docMap.style.transformOrigin = `${originX}% ${originY}%`;
+            docMap.style.transform = 'scale(4.5)';
             docMap.style.opacity = '0';
+            
             setTimeout(() => {
                 readerView.classList.add('active');
                 btnBack.classList.remove('hidden');
