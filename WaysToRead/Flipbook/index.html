@@ -14,7 +14,7 @@
             background-color: #000000;
             color: #ffffff;
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            overflow: hidden; /* Prevent scrolling, let the book take center stage */
+            overflow: hidden;
         }
         #book-container {
             height: 80vh;
@@ -28,26 +28,23 @@
         #book-container.ready {
             opacity: 1;
         }
-        .page-canvas {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        .page-wrapper {
             background-color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .page-canvas {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            /* Initial state for canvas */
+            max-width: 100%;
+            max-height: 100%;
         }
         .controls {
             transition: opacity 0.3s ease;
         }
         .controls:hover {
             opacity: 1;
-        }
-        /* Custom scrollbar for the loading state if needed */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #000; 
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #333; 
-            border-radius: 4px;
         }
     </style>
 </head>
@@ -85,7 +82,7 @@
             </div>
         </div>
 
-        <!-- Navigation Controls (Bottom Fixed) -->
+        <!-- Navigation Controls -->
         <div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-60">
             <button id="btn-prev" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pr-8 hover:border-zinc-600">
                 <span class="text-zinc-400 group-hover:text-white transition-colors">←</span>
@@ -99,61 +96,66 @@
     </main>
 
     <script>
-        // PDF.js Worker Setup
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // Array of PDF parts to concatenate
-        const pdfPaths = ['Diary1.pdf', 'Diary2.pdf', 'Diary3.pdf'];
-        
+        const pdfPaths = ['diary1.pdf', 'diary2.pdf', 'diary3.pdf'];
         const bookElement = document.getElementById('book');
         const container = document.getElementById('book-container');
         const loader = document.getElementById('loader');
         const pageCountEl = document.getElementById('page-count');
         
         let pageFlip;
-
+        
+        // This registry will map a linear Book Page Index (0, 1, 2...)
+        // to the specific PDF Document object and the specific Page Number within that PDF.
+        const pagesRegistry = []; 
+        
         // Configuration
-        const scale = 1.5; // Render quality (higher = sharper)
+        const scale = 1.5; // Render quality
+        const RENDER_WINDOW = 3; // Render current page +/- 3 pages. Keep this low to save memory.
 
         async function initBook() {
             try {
-                let totalPages = 0;
-                const renderPromises = [];
+                // 1. Pre-load PDF Structures (Metadata only, not images)
+                let globalPageIndex = 0;
 
-                // Iterate through each PDF part
                 for (const path of pdfPaths) {
                     const loadingTask = pdfjsLib.getDocument(path);
                     const pdfDoc = await loadingTask.promise;
                     const numPages = pdfDoc.numPages;
 
-                    // Render pages for this specific PDF part
                     for (let i = 1; i <= numPages; i++) {
-                        totalPages++; // Keep track of global page count
+                        // Store the mapping for lazy loading later
+                        pagesRegistry.push({
+                            globalIndex: globalPageIndex,
+                            pdfDoc: pdfDoc,
+                            pdfPageNumber: i,
+                            isRendered: false,
+                            canvas: null
+                        });
 
+                        // Create DOM Placeholder (Empty)
                         const wrapper = document.createElement('div');
-                        // Add flex centering to wrapper so mixed aspect ratios (cover vs spreads) display correctly
-                        wrapper.classList.add('page-wrapper', 'bg-zinc-900', 'flex', 'items-center', 'justify-center');
+                        wrapper.classList.add('page-wrapper');
+                        wrapper.dataset.density = 'soft'; // Simple paper effect
                         
                         const canvas = document.createElement('canvas');
-                        // Use max dimensions to preserve aspect ratio within the wrapper
-                        canvas.classList.add('page-canvas', 'max-w-full', 'max-h-full', 'object-contain');
+                        canvas.classList.add('page-canvas');
+                        // Assign ID to find it later
+                        canvas.id = `canvas-${globalPageIndex}`;
                         
                         wrapper.appendChild(canvas);
                         bookElement.appendChild(wrapper);
 
-                        renderPromises.push(renderPage(pdfDoc, i, canvas));
+                        globalPageIndex++;
                     }
                 }
 
-                pageCountEl.textContent = `PAGE 1 OF ${totalPages}`;
+                pageCountEl.textContent = `PAGE 1 OF ${pagesRegistry.length}`;
 
-                await Promise.all(renderPromises);
-
-                // 3. Initialize Flipbook
-                // We use 'usePortrait: true' because PDF pages are already spreads (except cover).
-                // We want to view one PDF page at a time, flipping through them like a stack or album.
+                // 2. Initialize Flipbook
                 pageFlip = new St.PageFlip(bookElement, {
-                    width: 800,  // Base dimensions - will scale responsive
+                    width: 800, 
                     height: 500,
                     size: 'stretch',
                     minWidth: 300,
@@ -161,57 +163,101 @@
                     minHeight: 200,
                     maxHeight: 1000,
                     maxShadowOpacity: 0.5,
-                    showCover: true, // Handle first page as cover
+                    showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
-                    usePortrait: true, // Forces single-page view (necessary since PDF pages are spreads)
+                    usePortrait: true, // Handle spreads as single "pages"
                     startPage: 0
                 });
 
                 pageFlip.loadFromHTML(document.querySelectorAll('.page-wrapper'));
+
+                // 3. Initial Render (First few pages only)
+                await updateVisiblePages(0);
 
                 // 4. Reveal UI
                 loader.style.opacity = '0';
                 setTimeout(() => loader.remove(), 500);
                 container.classList.add('ready');
 
-                // 5. Event Listeners
+                // 5. Event Listeners for Lazy Loading
                 pageFlip.on('flip', (e) => {
-                    // Update page count (index starts at 0, PDF pages at 1)
-                    pageCountEl.textContent = `PAGE ${e.data + 1} OF ${totalPages}`;
+                    const currentPageIndex = e.data; // The new current page index
+                    pageCountEl.textContent = `PAGE ${currentPageIndex + 1} OF ${pagesRegistry.length}`;
+                    
+                    // Trigger Smart Rendering
+                    updateVisiblePages(currentPageIndex);
                 });
 
-                document.getElementById('btn-prev').addEventListener('click', () => {
-                    pageFlip.flipPrev();
-                });
-
-                document.getElementById('btn-next').addEventListener('click', () => {
-                    pageFlip.flipNext();
-                });
+                document.getElementById('btn-prev').addEventListener('click', () => pageFlip.flipPrev());
+                document.getElementById('btn-next').addEventListener('click', () => pageFlip.flipNext());
 
             } catch (error) {
                 console.error("Error loading flipbook:", error);
-                loader.innerHTML = `<p class="text-red-500 font-mono text-center">Error loading PDF parts.<br>Ensure 'Diary1.pdf', 'Diary2.pdf', 'Diary3.pdf' are in the root folder.</p>`;
+                loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Memory limit exceeded or missing files.<br>Ensure diary1.pdf, diary2.pdf, diary3.pdf are present.</p>`;
             }
         }
 
-        async function renderPage(pdfDoc, num, canvas) {
-            const page = await pdfDoc.getPage(num);
-            const viewport = page.getViewport({ scale: scale });
-            const context = canvas.getContext('2d');
-
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
+        // Core Logic: Render only what is needed, clear what is not
+        async function updateVisiblePages(currentIndex) {
+            const renderQueue = [];
             
-            return page.render(renderContext).promise;
+            // Calculate window
+            const start = Math.max(0, currentIndex - RENDER_WINDOW);
+            const end = Math.min(pagesRegistry.length - 1, currentIndex + RENDER_WINDOW);
+
+            // 1. CLEAR pages outside the window (Free Memory)
+            for (let i = 0; i < pagesRegistry.length; i++) {
+                if (i < start || i > end) {
+                    if (pagesRegistry[i].isRendered) {
+                        const canvas = document.getElementById(`canvas-${i}`);
+                        if (canvas) {
+                            // Clear canvas context to free GPU memory
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            canvas.width = 0; // Effectively zeroes out the memory buffer
+                            canvas.height = 0;
+                            pagesRegistry[i].isRendered = false;
+                        }
+                    }
+                }
+            }
+
+            // 2. RENDER pages inside the window
+            for (let i = start; i <= end; i++) {
+                if (!pagesRegistry[i].isRendered) {
+                    renderQueue.push(renderPageAtIndex(i));
+                }
+            }
+
+            await Promise.all(renderQueue);
         }
 
-        // Initialize on load
+        async function renderPageAtIndex(index) {
+            const entry = pagesRegistry[index];
+            const canvas = document.getElementById(`canvas-${index}`);
+            if (!canvas) return;
+
+            try {
+                const page = await entry.pdfDoc.getPage(entry.pdfPageNumber);
+                const viewport = page.getViewport({ scale: scale });
+                const context = canvas.getContext('2d');
+
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                entry.isRendered = true;
+            } catch (err) {
+                console.error(`Failed to render page ${index}`, err);
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', initBook);
 
     </script>
