@@ -16,23 +16,15 @@
             font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow: hidden;
         }
-        #book-viewport {
-            height: 90vh;
+        #book-container {
+            height: 90vh; /* Increased vertical space as requested */
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: auto; /* Allow panning when zoomed */
-            padding: 20px;
-            scroll-behavior: smooth;
-        }
-        #book-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
             opacity: 0;
-            transition: opacity 1s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            transform-origin: center center;
+            transition: opacity 1s ease;
+            padding: 20px;
         }
         #book-container.ready {
             opacity: 1;
@@ -45,7 +37,7 @@
             overflow: hidden;
         }
         .page-canvas {
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
@@ -56,73 +48,28 @@
         .controls:hover {
             opacity: 1;
         }
-        
-        /* Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 2px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 1px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
-            border-radius: 50%;
-            background: #71717a;
-            cursor: pointer;
-            margin-top: -5px;
-            transition: background 0.2s;
-        }
-        input[type=range]:hover::-webkit-slider-thumb {
-            background: #ffffff;
-        }
     </style>
 </head>
 <body class="antialiased selection:bg-zinc-800 h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="flex flex-col md:flex-row justify-between items-center px-8 py-4 border-b border-zinc-900 z-10 bg-black/80 backdrop-blur-md fixed top-0 w-full gap-4">
-        <div class="flex items-center gap-6">
-            <div>
-                <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-500 block leading-none mb-1">Archival Viewer</span>
-                <h1 class="text-lg font-light tracking-tight text-zinc-200">The Diary <span class="italic font-serif text-zinc-400">Flipbook</span></h1>
-            </div>
-            
-            <!-- Page Slider -->
-            <div class="flex items-center gap-4 bg-zinc-900/50 px-4 py-2 rounded-lg border border-zinc-800/50">
-                <span class="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">Navigate</span>
-                <input type="range" id="page-slider" min="0" value="0" class="w-32 md:w-48 lg:w-64 cursor-pointer">
-                <div id="page-count" class="text-xs font-mono text-zinc-400 tracking-widest whitespace-nowrap min-w-[80px]">
-                    LOADING...
-                </div>
-            </div>
+    <header class="flex justify-between items-center px-8 py-4 border-b border-zinc-900 z-10 bg-black/50 backdrop-blur-sm fixed top-0 w-full">
+        <div>
+            <span class="text-[10px] uppercase tracking-[0.3em] text-zinc-500 block">Archival Viewer</span>
+            <h1 class="text-xl font-light tracking-tight text-zinc-200">The Diary <span class="italic font-serif text-zinc-400">Flipbook</span></h1>
         </div>
-
-        <div class="flex items-center gap-6">
-            <!-- Zoom Controls -->
-            <div class="flex items-center gap-3 bg-zinc-900/50 px-3 py-1.5 rounded-full border border-zinc-800">
-                <button id="zoom-out" class="text-zinc-500 hover:text-white transition-colors p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                </button>
-                <span id="zoom-label" class="text-[10px] font-mono text-zinc-400 min-w-[40px] text-center">100%</span>
-                <button id="zoom-in" class="text-zinc-500 hover:text-white transition-colors p-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
-                </button>
+        <div class="flex gap-4 items-center">
+            <div id="page-count" class="text-xs font-mono text-zinc-500 tracking-widest">
+                LOADING...
             </div>
-
-            <a href="index.html" class="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white transition-colors border border-zinc-800 px-4 py-2 rounded-full hover:border-zinc-600 bg-black/20">
+            <a href="index.html" class="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white transition-colors border border-zinc-800 px-3 py-1 rounded-full hover:border-zinc-600">
                 Close
             </a>
         </div>
     </header>
 
     <!-- Main Flipbook Area -->
-    <main id="book-viewport" class="flex-grow relative pt-24">
+    <main class="flex-grow flex flex-col justify-center items-center relative pt-16">
         
         <div id="loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-0">
             <div class="w-12 h-12 border-t-2 border-zinc-700 rounded-full animate-spin"></div>
@@ -135,13 +82,13 @@
             </div>
         </div>
 
-        <!-- Navigation Buttons -->
-        <div class="fixed bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-40 hover:opacity-100 transition-opacity">
-            <button id="btn-prev" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/90 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:border-zinc-600">
+        <!-- Navigation Controls -->
+        <div class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-8 z-20 controls opacity-60">
+            <button id="btn-prev" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pr-8 hover:border-zinc-600">
                 <span class="text-zinc-400 group-hover:text-white transition-colors">←</span>
                 <span class="text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300">Prev</span>
             </button>
-            <button id="btn-next" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/90 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:border-zinc-600">
+            <button id="btn-next" class="group flex items-center gap-2 px-6 py-3 bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-full hover:bg-zinc-800 transition-all hover:pl-8 hover:border-zinc-600">
                 <span class="text-[10px] uppercase tracking-widest text-zinc-500 group-hover:text-zinc-300">Next</span>
                 <span class="text-zinc-400 group-hover:text-white transition-colors">→</span>
             </button>
@@ -156,14 +103,12 @@
         const container = document.getElementById('book-container');
         const loader = document.getElementById('loader');
         const pageCountEl = document.getElementById('page-count');
-        const pageSlider = document.getElementById('page-slider');
         
         let pageFlip;
         const pagesRegistry = []; 
         
-        const scale = 2.0; 
+        const scale = 1.8; 
         const RENDER_WINDOW = 4; 
-        let currentZoom = 1.0;
 
         async function initBook() {
             try {
@@ -175,30 +120,32 @@
                     const numPages = pdfDoc.numPages;
 
                     for (let i = 1; i <= numPages; i++) {
-                        // Each PDF page is a horizontal spread. 
-                        // We treat the whole spread as one flippable sheet to maintain size.
-                        addPageToRegistry(globalBookIndex++, pdfDoc, i);
+                        if (fileIdx === 0 && i === 1) {
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'full');
+                        } else {
+                            // Split pages into Left and Right halves
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'left');
+                            addPageToRegistry(globalBookIndex++, pdfDoc, i, 'right');
+                        }
                     }
                 }
 
-                const totalPages = pagesRegistry.length;
-                pageCountEl.textContent = `1 / ${totalPages}`;
-                pageSlider.max = totalPages - 1;
+                pageCountEl.textContent = `PAGE 1 OF ${pagesRegistry.length}`;
 
-                // Configure for Landscape view (one full spread at a time)
+                // Setup PageFlip with Portrait centering to show one page at a time
                 pageFlip = new St.PageFlip(bookElement, {
-                    width: 1000, // Landscape ratio base
-                    height: 700,
+                    width: 500, 
+                    height: 750,
                     size: 'stretch',
-                    minWidth: 400,
-                    maxWidth: 1600,
+                    minWidth: 200,
+                    maxWidth: 1200,
                     minHeight: 300,
                     maxHeight: 2000, 
                     maxShadowOpacity: 0.3,
                     showCover: true,
                     mobileScrollSupport: false, 
                     flippingTime: 800, 
-                    usePortrait: true, // Shows one index (spread) in center
+                    usePortrait: true,
                     startPage: 0,
                     drawShadow: true,
                     clickEventForward: true
@@ -212,19 +159,13 @@
                 setTimeout(() => loader.remove(), 500);
                 container.classList.add('ready');
 
-                // Events
                 pageFlip.on('flip', (e) => {
                     const idx = e.data;
-                    pageCountEl.textContent = `${idx + 1} / ${totalPages}`;
-                    pageSlider.value = idx;
+                    pageCountEl.textContent = `PAGE ${idx + 1} OF ${pagesRegistry.length}`;
                     updateVisiblePages(idx);
                 });
 
-                pageSlider.addEventListener('input', (e) => {
-                    const targetIdx = parseInt(e.target.value);
-                    pageFlip.turnToPage(targetIdx);
-                });
-
+                // Explicitly set corner for the flip animation from buttons
                 document.getElementById('btn-prev').addEventListener('click', () => {
                     pageFlip.flipPrev('bottom');
                 });
@@ -233,30 +174,17 @@
                     pageFlip.flipNext('bottom');
                 });
 
-                // Zoom Logic
-                const zoomInBtn = document.getElementById('zoom-in');
-                const zoomOutBtn = document.getElementById('zoom-out');
-                const zoomLabel = document.getElementById('zoom-label');
-
-                function updateZoom(newZoom) {
-                    currentZoom = Math.max(0.5, Math.min(newZoom, 3.0));
-                    container.style.transform = `scale(${currentZoom})`;
-                    zoomLabel.textContent = `${Math.round(currentZoom * 100)}%`;
-                }
-
-                zoomInBtn.addEventListener('click', () => updateZoom(currentZoom + 0.25));
-                zoomOutBtn.addEventListener('click', () => updateZoom(currentZoom - 0.25));
-
             } catch (error) {
                 console.error("Error loading flipbook:", error);
                 loader.innerHTML = `<p class="text-red-500 font-mono text-center px-4">Error loading PDF parts.<br>Check console for details.</p>`;
             }
         }
 
-        function addPageToRegistry(index, pdfDoc, pdfPageNum) {
+        function addPageToRegistry(index, pdfDoc, pdfPageNum, type) {
             pagesRegistry.push({
                 pdfDoc: pdfDoc,
                 pdfPageNumber: pdfPageNum,
+                type: type, 
                 isRendered: false
             });
 
@@ -297,6 +225,9 @@
             }
         }
 
+        const scratchCanvas = document.createElement('canvas');
+        const scratchCtx = scratchCanvas.getContext('2d');
+
         async function renderPageAtIndex(index) {
             const entry = pagesRegistry[index];
             const canvas = document.getElementById(`canvas-${index}`);
@@ -305,12 +236,27 @@
             try {
                 const page = await entry.pdfDoc.getPage(entry.pdfPageNumber);
                 const viewport = page.getViewport({ scale: scale });
-                const ctx = canvas.getContext('2d');
-
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
                 
-                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                scratchCanvas.width = viewport.width;
+                scratchCanvas.height = viewport.height;
+                await page.render({ canvasContext: scratchCtx, viewport: viewport }).promise;
+
+                const targetCtx = canvas.getContext('2d');
+
+                if (entry.type === 'full') {
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    targetCtx.drawImage(scratchCanvas, 0, 0);
+                } else if (entry.type === 'left') {
+                    canvas.width = viewport.width / 2;
+                    canvas.height = viewport.height;
+                    targetCtx.drawImage(scratchCanvas, 0, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
+                } else if (entry.type === 'right') {
+                    canvas.width = viewport.width / 2;
+                    canvas.height = viewport.height;
+                    targetCtx.drawImage(scratchCanvas, viewport.width / 2, 0, viewport.width / 2, viewport.height, 0, 0, canvas.width, canvas.height);
+                }
+                
                 entry.isRendered = true;
             } catch (err) {
                 console.error(`Failed to render book page ${index}`, err);
